@@ -1,27 +1,94 @@
 """
-Swarms API Client Package
+Swarms API Client
 
-This package provides a production-grade client for interacting with the Swarms API.
+A production-grade Python client for the Swarms API with both synchronous and asynchronous interfaces.
 """
 
-from .client import (
-    SwarmsClient,
+from swarms_client.client import (
+    # Main client
+    Swarms,
+    client,
+    
+    # Models
+    SwarmsObject,
+    AgentTool,
+    AgentSpec,
+    AgentCompletion,
+    ScheduleSpec,
+    SwarmSpec,
+    Usage,
+    AgentCompletionResponse,
+    SwarmCompletionResponse,
+    LogEntry,
+    LogsResponse,
+    SwarmTypesResponse,
+    ModelsResponse,
+    
+    # Exceptions
     SwarmsError,
     AuthenticationError,
     RateLimitError,
-    ValidationError,
     APIError,
+    InvalidRequestError,
+    InsufficientCreditsError,
+    TimeoutError,
+    NetworkError,
+    
+    # Resources
+    BaseResource,
+    AgentResource,
+    SwarmResource,
+    ModelsResource,
+    LogsResource,
+    
+    # Types
+    ModelNameType,
+    AgentNameType,
+    SwarmTypeType,
 )
-from .config import SwarmsConfig
+
 
 __all__ = [
-    "SwarmsClient",
-    "SwarmsConfig",
+    # Main client
+    "Swarms",
+    "client",
+    
+    # Models
+    "SwarmsObject",
+    "AgentTool",
+    "AgentSpec",
+    "AgentCompletion",
+    "ScheduleSpec", 
+    "SwarmSpec",
+    "Usage",
+    "AgentCompletionResponse",
+    "SwarmCompletionResponse",
+    "LogEntry",
+    "LogsResponse",
+    "SwarmTypesResponse",
+    "ModelsResponse",
+    
+    # Exceptions
     "SwarmsError",
     "AuthenticationError",
     "RateLimitError",
-    "ValidationError",
     "APIError",
+    "InvalidRequestError",
+    "InsufficientCreditsError",
+    "TimeoutError",
+    "NetworkError",
+    
+    # Resources
+    "BaseResource",
+    "AgentResource",
+    "SwarmResource",
+    "ModelsResource",
+    "LogsResource",
+    
+    # Types
+    "ModelNameType",
+    "AgentNameType",
+    "SwarmTypeType",
 ]
 
-__version__ = "0.1.0"
+

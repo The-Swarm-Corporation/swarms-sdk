@@ -1,945 +1,1025 @@
 """
 Swarms API Client
 
-This module provides a production-grade client for interacting with the Swarms API.
-It includes both synchronous and asynchronous APIs for maximum flexibility.
-
-Example:
-    ```python
-    from swarms_client import SwarmsClient
-
-    # Initialize the client
-    client = SwarmsClient(api_key="your-api-key")
-
-    # Create a swarm
-    swarm = client.create_swarm(
-        name="my-swarm",
-        task="Analyze this data",
-        agents=[
-            {
-                "agent_name": "analyzer",
-                "model_name": "gpt-4",
-                "role": "worker"
-            }
-        ]
-    )
-
-    # Run the swarm
-    result = client.run_swarm(swarm)
-    ```
+A production-grade Python client for the Swarms API with both synchronous and asynchronous interfaces.
 """
 
 import asyncio
-import concurrent.futures
-import hashlib
+import os
 import json
-import threading
 import time
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Union, Any, Literal, Type, TypeVar, cast
 from urllib.parse import urljoin
 
 import aiohttp
 import requests
-from cachetools import TTLCache
+from dotenv import load_dotenv
+from pydantic import BaseModel, field_validator, ConfigDict
+from pydantic.v1 import root_validator
 from loguru import logger
-from pydantic import ValidationError
 
-from swarms_client.config import SwarmsConfig
-from swarms_client.models import AgentCompletion, AgentSpec, SwarmSpec
-from swarms_client.retry import RetryHandler
+# Check if tqdm is installed for progress tracking
+try:
+    from tqdm.auto import tqdm
+    TQDM_INSTALLED = True
+except ImportError:
+    TQDM_INSTALLED = False
 
-# Thread-local storage for sync client session
-_thread_local = threading.local()
+# ===== Type definitions =====
+T = TypeVar('T')
+ModelNameType = str
+AgentNameType = str
+SwarmTypeType = Literal[
+    "AgentRearrange",
+    "MixtureOfAgents",
+    "SpreadSheetSwarm",
+    "SequentialWorkflow",
+    "ConcurrentWorkflow",
+    "GroupChat",
+    "MultiAgentRouter",
+    "AutoSwarmBuilder",
+    "HiearchicalSwarm",
+    "auto",
+    "MajorityVoting",
+    "MALT",
+    "DeepResearchSwarm",
+]
 
+# ===== Models =====
 
-# Custom exceptions
+class SwarmsObject(BaseModel):
+    """Base class for Swarms API objects"""
+    model_config = ConfigDict(
+        extra='allow',
+        arbitrary_types_allowed=True,
+        populate_by_name=True,
+    )
+
+class AgentTool(SwarmsObject):
+    """Tool configuration for an agent"""
+    type: str
+    function: Dict[str, Any]
+
+class AgentSpec(SwarmsObject):
+    """Configuration for an agent"""
+    agent_name: str
+    description: Optional[str] = None
+    system_prompt: Optional[str] = None
+    model_name: ModelNameType = "gpt-4o-mini"
+    auto_generate_prompt: bool = False
+    max_tokens: int = 8192
+    temperature: float = 0.5
+    role: str = "worker"
+    max_loops: int = 1
+    tools_dictionary: Optional[List[Dict[str, Any]]] = None
+
+    @field_validator('temperature')
+    def validate_temperature(cls, v):
+        if not 0 <= v <= 1:
+            raise ValueError("Temperature must be between 0 and 1")
+        return v
+
+class AgentCompletion(SwarmsObject):
+    """Agent completion request"""
+    agent_config: AgentSpec
+    task: str
+    history: Optional[Dict[str, Any]] = None
+
+class ScheduleSpec(SwarmsObject):
+    """Schedule specification for swarm execution"""
+    scheduled_time: str  # ISO formatted datetime
+    timezone: str = "UTC"
+
+class SwarmSpec(SwarmsObject):
+    """Configuration for a swarm"""
+    name: Optional[str] = None
+    description: Optional[str] = None
+    agents: Optional[List[AgentSpec]] = None
+    max_loops: int = 1
+    swarm_type: Optional[SwarmTypeType] = None
+    rearrange_flow: Optional[str] = None
+    task: Optional[str] = None
+    img: Optional[str] = None
+    return_history: bool = True
+    rules: Optional[str] = None
+    schedule: Optional[ScheduleSpec] = None
+    tasks: Optional[List[str]] = None
+    messages: Optional[List[Dict[str, Any]]] = None
+    stream: bool = False
+    service_tier: str = "standard"
+
+    @root_validator
+    def validate_task_or_tasks(cls, values):
+        if not any([values.get('task'), values.get('tasks'), values.get('messages')]):
+            raise ValueError("Either task, tasks, or messages must be provided")
+        return values
+
+# ===== API Response Models =====
+
+class Usage(SwarmsObject):
+    """Token usage information"""
+    input_tokens: int
+    output_tokens: int
+    total_tokens: int
+
+class AgentCompletionResponse(SwarmsObject):
+    """Response from an agent completion request"""
+    id: str
+    success: bool
+    name: str
+    description: Optional[str] = None
+    temperature: float
+    outputs: Dict[str, Any]
+    usage: Usage
+    timestamp: str
+
+class SwarmCompletionResponse(SwarmsObject):
+    """Response from a swarm completion request"""
+    job_id: str
+    status: str
+    swarm_name: Optional[str] = None
+    description: Optional[str] = None
+    swarm_type: Optional[SwarmTypeType] = None
+    output: Dict[str, Any]
+    number_of_agents: int
+    service_tier: str
+    tasks: Optional[List[str]] = None
+    messages: Optional[List[Dict[str, Any]]] = None
+
+class LogEntry(SwarmsObject):
+    """API request log entry"""
+    id: Optional[str] = None
+    api_key: str
+    data: Dict[str, Any]
+    created_at: Optional[str] = None
+
+class LogsResponse(SwarmsObject):
+    """Response from a logs request"""
+    status: str
+    count: int
+    logs: List[LogEntry]
+    timestamp: str
+
+class SwarmTypesResponse(SwarmsObject):
+    """Response from a swarm types request"""
+    success: bool
+    swarm_types: List[SwarmTypeType]
+
+class ModelsResponse(SwarmsObject):
+    """Response from a models request"""
+    success: bool
+    models: List[str]
+
+# ===== Exceptions =====
+
 class SwarmsError(Exception):
-    """Base exception for all Swarms API errors."""
+    """Base exception for all Swarms API errors"""
+    def __init__(self, message=None, http_status=None, request_id=None, body=None):
+        self.message = message
+        self.http_status = http_status
+        self.request_id = request_id
+        self.body = body
+        super().__init__(self.message)
 
-    pass
-
+    def __str__(self):
+        msg = self.message or "Unknown error"
+        if self.http_status:
+            msg = f"[{self.http_status}] {msg}"
+        if self.request_id:
+            msg = f"{msg} (Request ID: {self.request_id})"
+        return msg
 
 class AuthenticationError(SwarmsError):
-    """Raised when authentication fails."""
-
+    """Raised when there's an issue with authentication"""
     pass
-
 
 class RateLimitError(SwarmsError):
-    """Raised when rate limit is exceeded."""
-
+    """Raised when the rate limit is exceeded"""
     pass
-
-
-class ValidationError(SwarmsError):
-    """Raised when input validation fails."""
-
-    pass
-
 
 class APIError(SwarmsError):
-    """Raised when the API returns an error."""
+    """Raised when the API returns an error"""
+    pass
 
-    def __init__(self, message: str, status_code: int, response: Dict[str, Any]):
-        self.status_code = status_code
-        self.response = response
-        super().__init__(f"{message} (Status: {status_code})")
+class InvalidRequestError(SwarmsError):
+    """Raised when the request is invalid"""
+    pass
 
+class InsufficientCreditsError(SwarmsError):
+    """Raised when the user doesn't have enough credits"""
+    pass
 
-class SwarmsClient:
+class TimeoutError(SwarmsError):
+    """Raised when a request times out"""
+    pass
+
+class NetworkError(SwarmsError):
+    """Raised when there's a network issue"""
+    pass
+
+# ===== Utilities =====
+
+def _handle_error_response(response, body):
+    """Process an error response and raise the appropriate exception"""
+    request_id = response.headers.get("x-request-id")
+    
+    if response.status_code == 401 or response.status_code == 403:
+        raise AuthenticationError(
+            message=body.get("detail", "Authentication error"),
+            http_status=response.status_code,
+            request_id=request_id,
+            body=body
+        )
+    elif response.status_code == 429:
+        raise RateLimitError(
+            message=body.get("detail", "Rate limit exceeded"),
+            http_status=response.status_code,
+            request_id=request_id,
+            body=body
+        )
+    elif response.status_code == 400:
+        raise InvalidRequestError(
+            message=body.get("detail", "Invalid request"),
+            http_status=response.status_code,
+            request_id=request_id,
+            body=body
+        )
+    elif response.status_code == 402:
+        raise InsufficientCreditsError(
+            message=body.get("detail", "Insufficient credits"),
+            http_status=response.status_code,
+            request_id=request_id,
+            body=body
+        )
+    else:
+        raise APIError(
+            message=body.get("detail", f"API error: {response.status_code}"),
+            http_status=response.status_code,
+            request_id=request_id,
+            body=body
+        )
+
+async def _handle_async_error_response(response, body):
+    """Process an error response asynchronously and raise the appropriate exception"""
+    request_id = response.headers.get("x-request-id")
+    
+    if response.status == 401 or response.status == 403:
+        raise AuthenticationError(
+            message=body.get("detail", "Authentication error"),
+            http_status=response.status,
+            request_id=request_id,
+            body=body
+        )
+    elif response.status == 429:
+        raise RateLimitError(
+            message=body.get("detail", "Rate limit exceeded"),
+            http_status=response.status,
+            request_id=request_id,
+            body=body
+        )
+    elif response.status == 400:
+        raise InvalidRequestError(
+            message=body.get("detail", "Invalid request"),
+            http_status=response.status,
+            request_id=request_id,
+            body=body
+        )
+    elif response.status == 402:
+        raise InsufficientCreditsError(
+            message=body.get("detail", "Insufficient credits"),
+            http_status=response.status,
+            request_id=request_id,
+            body=body
+        )
+    else:
+        raise APIError(
+            message=body.get("detail", f"API error: {response.status}"),
+            http_status=response.status,
+            request_id=request_id,
+            body=body
+        )
+
+def _parse_response(response_class: Type[T], data: Dict[str, Any]) -> T:
+    """Parse API response into the appropriate model"""
+    try:
+        return response_class.model_validate(data)
+    except Exception as e:
+        logger.error(f"Error parsing response: {e}")
+        # Return raw data if parsing fails
+        return cast(T, data)
+
+# ===== Swarms API Client =====
+
+class Swarms:
     """
-    A production-grade client for interacting with the Swarms API.
-
-    This client provides methods for creating and managing swarms, running agents,
-    and handling API responses with proper error handling and logging.
-
-    Attributes:
-        api_key (str): The API key for authentication
-        base_url (str): The base URL for the API
-        timeout (int): Request timeout in seconds
-        max_retries (int): Maximum number of retries for failed requests
-        max_concurrent_requests (int): Maximum number of concurrent requests
-        thread_pool_size (int): Maximum number of threads for sync operations
-        session (aiohttp.ClientSession): Async HTTP session for making requests
+    Client for the Swarms API with both synchronous and asynchronous interfaces.
+    
+    Example usage:
+        ```python
+        from swarms import Swarms
+        
+        # Initialize the client
+        client = Swarms(api_key="your-api-key")
+        
+        # Make a swarm completion request
+        response = client.swarm.create(
+            name="My Swarm",
+            swarm_type="auto",
+            task="Analyze the pros and cons of quantum computing",
+            agents=[
+                {
+                    "agent_name": "Researcher",
+                    "description": "Conducts in-depth research",
+                    "model_name": "gpt-4o"
+                },
+                {
+                    "agent_name": "Critic",
+                    "description": "Evaluates arguments for flaws",
+                    "model_name": "gpt-4o-mini"
+                }
+            ]
+        )
+        
+        # Print the output
+        print(response.output)
+        ```
     """
-
+    
     def __init__(
-        self,
-        api_key: Optional[str] = None,
-        base_url: Optional[str] = None,
-        timeout: Optional[int] = None,
-        max_retries: Optional[int] = None,
-        max_concurrent_requests: Optional[int] = None,
-        retry_on_status: Optional[Set[int]] = None,
-        retry_delay: Optional[float] = None,
-        max_retry_delay: Optional[int] = None,
-        jitter: bool = True,
-        enable_cache: bool = True,
-        thread_pool_size: Optional[int] = None,
+        self, 
+        api_key: Optional[str] = os.getenv("SWARMS_API_KEY"), 
+        base_url: Optional[str] = "https://swarms-api-285321057562.us-east1.run.app",
+        timeout: int = 60,
+        max_retries: int = 3,
+        retry_delay: int = 1,
+        log_level: str = "INFO"
     ):
         """
-        Initialize the Swarms API client with optimized settings.
-
+        Initialize the Swarms API client.
+        
         Args:
-            api_key (Optional[str]): API key for authentication. If not provided,
-                will look for SWARMS_API_KEY environment variable.
-            base_url (Optional[str]): Base URL for the API. Defaults to value from config.
-            timeout (Optional[int]): Request timeout in seconds.
-            max_retries (Optional[int]): Maximum number of retries for failed requests.
-            max_concurrent_requests (Optional[int]): Maximum number of concurrent requests.
-            retry_on_status (Optional[Set[int]]): HTTP status codes to retry on.
-            retry_delay (Optional[float]): Initial delay between retries in seconds.
-            max_retry_delay (Optional[int]): Maximum delay between retries in seconds.
-            jitter (bool): Whether to add random jitter to retry delays.
-            enable_cache (bool): Whether to enable response caching.
-            thread_pool_size (Optional[int]): Maximum number of threads for sync operations.
-
-        Raises:
-            AuthenticationError: If no API key is provided or found in environment.
+            api_key: API key for authentication. If not provided, it will be loaded from 
+                    the SWARMS_API_KEY environment variable.
+            base_url: Base URL for the API. If not provided, it will be loaded from 
+                     the SWARMS_API_BASE_URL environment variable or default to the production URL.
+            timeout: Timeout for API requests in seconds.
+            max_retries: Maximum number of retry attempts for failed requests.
+            retry_delay: Initial delay between retries in seconds (uses exponential backoff).
+            log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL).
         """
-        self.api_key = api_key or SwarmsConfig.get_api_key()
-
+        # Load environment variables
+        load_dotenv()
+        
+        # Set API key
+        self.api_key = api_key or os.getenv("SWARMS_API_KEY")
         if not self.api_key:
-            raise AuthenticationError(
-                "No API key provided. Set SWARMS_API_KEY environment variable or pass api_key parameter."
-            )
-
-        self.base_url = (base_url or SwarmsConfig.get_base_url()).rstrip("/")
-        self.timeout = timeout or SwarmsConfig.get_timeout()
-        self.max_retries = max_retries or SwarmsConfig.get_max_retries()
-        self.max_concurrent_requests = (
-            max_concurrent_requests or SwarmsConfig.get_max_concurrent_requests()
+            logger.warning("No API key provided. Please set the SWARMS_API_KEY environment variable or pass it explicitly.")
+        
+        # Set base URL
+        self.base_url = base_url or os.getenv("SWARMS_API_BASE_URL", "https://swarms-api-285321057562.us-east1.run.app")
+        
+        # Ensure base_url ends with a slash
+        if not self.base_url.endswith('/'):
+            self.base_url += '/'
+        
+        # Set other parameters
+        self.timeout = timeout
+        self.max_retries = max_retries
+        self.retry_delay = retry_delay
+        
+        # Set up logging
+        logger.remove()  # Remove default handler
+        logger.add(
+            lambda msg: print(msg, end=""),
+            colorize=True,
+            level=log_level,
+            format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
         )
-
-        # Initialize thread pool for sync operations
-        self.thread_pool_size = thread_pool_size or min(
-            32, self.max_concurrent_requests * 2
-        )
-        self.thread_pool = concurrent.futures.ThreadPoolExecutor(
-            max_workers=self.thread_pool_size, thread_name_prefix="swarms_client_worker"
-        )
-
-        # Initialize async semaphore
-        self.semaphore = asyncio.Semaphore(self.max_concurrent_requests)
-
-        # Initialize sessions
-        self.async_session = None
-
-        # Initialize response cache
-        self.enable_cache = enable_cache
-        if enable_cache:
-            self.cache = TTLCache(
-                maxsize=1000, ttl=SwarmsConfig.get_response_cache_ttl()
-            )
-
-        # Initialize retry handler
-        self.retry_handler = RetryHandler(
-            max_retries=self.max_retries,
-            retry_delay=retry_delay or SwarmsConfig.get_retry_delay(),
-            max_retry_delay=max_retry_delay or SwarmsConfig.get_max_retry_delay(),
-            retry_on_status=retry_on_status,
-            jitter=jitter,
-        )
-
-        logger.info(f"Initialized SwarmsClient with base URL: {self.base_url}")
-
-    def _get_sync_session(self) -> requests.Session:
-        """Get or create thread-local sync session."""
-        if not hasattr(_thread_local, "session"):
-            session = requests.Session()
-            session.headers.update(self._get_headers())
-            adapter = requests.adapters.HTTPAdapter(
-                pool_connections=self.max_concurrent_requests,
-                pool_maxsize=self.max_concurrent_requests,
-                max_retries=self.max_retries,
-                pool_block=False,
-            )
-            session.mount("http://", adapter)
-            session.mount("https://", adapter)
-            _thread_local.session = session
-        return _thread_local.session
-
-    async def __aenter__(self):
-        """Create optimized aiohttp session when entering async context."""
-        tcp_connector = aiohttp.TCPConnector(
-            limit=self.max_concurrent_requests,
-            ttl_dns_cache=SwarmsConfig.get_dns_cache_ttl(),
-            use_dns_cache=True,
-            force_close=False,
-            enable_cleanup_closed=True,
-            tcp_nodelay=SwarmsConfig.get_tcp_nodelay(),
-            keepalive_timeout=SwarmsConfig.get_keepalive_timeout(),
-        )
-
-        self.async_session = aiohttp.ClientSession(
-            headers=self._get_headers(),
-            timeout=aiohttp.ClientTimeout(total=self.timeout),
-            connector=tcp_connector,
-            json_serialize=json.dumps,
-            raise_for_status=True,
-        )
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Close the async session when exiting context."""
-        if self.async_session:
-            await self.async_session.close()
-
+        
+        # Create aiohttp session
+        self._session = None
+        
+        # Initialize API resources
+        self.agent = AgentResource(self)
+        self.swarm = SwarmResource(self)
+        self.models = ModelsResource(self)
+        self.logs = LogsResource(self)
+    
     def __enter__(self):
-        """Enter sync context."""
         return self
-
+    
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """Exit sync context and cleanup."""
-        self.close()
-
-    def close(self):
-        """Close all sessions and cleanup resources."""
-        if hasattr(_thread_local, "session"):
-            _thread_local.session.close()
-            delattr(_thread_local, "session")
-
-        if self.thread_pool:
-            self.thread_pool.shutdown(wait=False)
-
-        if self.async_session and not self.async_session.closed:
-            asyncio.create_task(self.async_session.close())
-
-    def _get_headers(self) -> Dict[str, str]:
-        """Get headers for API requests."""
-        return {
-            "x-api-key": self.api_key,
+        pass
+    
+    async def __aenter__(self):
+        self._session = aiohttp.ClientSession()
+        return self
+    
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self._session:
+            await self._session.close()
+            self._session = None
+    
+    def _make_request(
+        self, 
+        method: str, 
+        endpoint: str, 
+        params: Optional[Dict[str, Any]] = None,
+        data: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+        retries_left: Optional[int] = None
+    ):
+        """
+        Make a synchronous HTTP request to the API.
+        
+        Args:
+            method: HTTP method (GET, POST, PUT, DELETE)
+            endpoint: API endpoint (relative to base_url)
+            params: Query parameters
+            data: Request body data
+            headers: Additional headers
+            retries_left: Number of retries left
+        
+        Returns:
+            Response data as a dictionary
+        """
+        url = urljoin(self.base_url, endpoint)
+        
+        if retries_left is None:
+            retries_left = self.max_retries
+        
+        # Set up headers
+        request_headers = {
             "Content-Type": "application/json",
-            "Accept-Encoding": "gzip, deflate",
-            "Connection": "keep-alive",
+            "x-api-key": self.api_key
         }
-
-    def _get_cache_key(
-        self,
-        method: str,
-        endpoint: str,
-        data: Optional[Dict] = None,
-        params: Optional[Dict] = None,
-    ) -> str:
-        """Generate a unique cache key for the request."""
-        key_parts = [method, endpoint]
-        if params:
-            key_parts.append(json.dumps(params, sort_keys=True))
-        if data:
-            key_parts.append(json.dumps(data, sort_keys=True))
-        key_string = "|".join(key_parts)
-        return hashlib.sha256(key_string.encode()).hexdigest()
-
-    async def _async_request(
-        self,
-        method: str,
-        endpoint: str,
-        data: Optional[Dict[str, Any]] = None,
-        params: Optional[Dict[str, Any]] = None,
-        skip_cache: bool = False,
-    ) -> Dict[str, Any]:
-        """Make an optimized async HTTP request."""
-        url = urljoin(self.base_url, endpoint)
-
-        # Check cache for GET requests
-        if self.enable_cache and method == "GET" and not skip_cache:
-            cache_key = self._get_cache_key(method, endpoint, params=params)
-            cached_response = self.cache.get(cache_key)
-            if cached_response is not None:
-                logger.debug(f"Cache hit for {url}")
-                return cached_response
-
-        async def _do_request() -> Tuple[Dict[str, Any], float]:
-            start_time = time.time()
-            async with self.semaphore:
-                async with self.async_session.request(
-                    method=method,
-                    url=url,
-                    json=data,
-                    params=params,
-                    compress=True,
-                ) as response:
-                    response_data = await response.json()
-                    request_time = time.time() - start_time
-
-                    if response.status == 200:
-                        return response_data, request_time
-                    elif response.status == 401:
-                        raise AuthenticationError("Invalid API key")
-                    elif response.status == 429:
-                        raise RateLimitError("Rate limit exceeded")
-                    else:
-                        raise APIError(
-                            f"API request failed: {response_data.get('detail', 'Unknown error')}",
-                            response.status,
-                            response_data,
-                        )
-
+        if headers:
+            request_headers.update(headers)
+        
         try:
-            response_data, request_time = await self.retry_handler.execute_with_retry(
-                _do_request
-            )
-
-            # Cache successful GET responses
-            if self.enable_cache and method == "GET" and not skip_cache:
-                cache_key = self._get_cache_key(method, endpoint, params=params)
-                self.cache[cache_key] = response_data
-
-            logger.debug(f"Request to {url} completed in {request_time:.2f}s")
-            return response_data
-
-        except aiohttp.ClientError as e:
-            logger.error(f"Network error: {str(e)}")
-            raise SwarmsError(f"Network error: {str(e)}")
-
-    def _sync_request(
-        self,
-        method: str,
-        endpoint: str,
-        data: Optional[Dict[str, Any]] = None,
-        params: Optional[Dict[str, Any]] = None,
-        skip_cache: bool = False,
-    ) -> Dict[str, Any]:
-        """Make an optimized sync HTTP request."""
-        url = urljoin(self.base_url, endpoint)
-
-        # Check cache for GET requests
-        if self.enable_cache and method == "GET" and not skip_cache:
-            cache_key = self._get_cache_key(method, endpoint, params=params)
-            cached_response = self.cache.get(cache_key)
-            if cached_response is not None:
-                logger.debug(f"Cache hit for {url}")
-                return cached_response
-
-        session = self._get_sync_session()
-        start_time = time.time()
-
-        try:
-            response = session.request(
+            logger.debug(f"{method} {url}")
+            if data:
+                logger.debug(f"Request data: {json.dumps(data, indent=2)}")
+            
+            response = requests.request(
                 method=method,
                 url=url,
-                json=data,
                 params=params,
-                timeout=self.timeout,
+                json=data,
+                headers=request_headers,
+                timeout=self.timeout
             )
-            request_time = time.time() - start_time
-
-            response_data = response.json()
-
-            if response.status_code == 200:
-                # Cache successful GET responses
-                if self.enable_cache and method == "GET" and not skip_cache:
-                    cache_key = self._get_cache_key(method, endpoint, params=params)
-                    self.cache[cache_key] = response_data
-
-                logger.debug(f"Request to {url} completed in {request_time:.2f}s")
-                return response_data
-            elif response.status_code == 401:
-                raise AuthenticationError("Invalid API key")
-            elif response.status_code == 429:
-                raise RateLimitError("Rate limit exceeded")
+            
+            # Try to parse JSON response
+            try:
+                body = response.json()
+            except ValueError:
+                body = {"detail": response.text}
+            
+            # Handle error responses
+            if not response.ok:
+                _handle_error_response(response, body)
+            
+            logger.debug(f"Response: {json.dumps(body, indent=2) if isinstance(body, dict) else body}")
+            return body
+        
+        except (requests.Timeout, requests.ConnectionError) as e:
+            # Retry on network errors with exponential backoff
+            if retries_left > 0:
+                delay = self.retry_delay * (2 ** (self.max_retries - retries_left))
+                logger.warning(f"Request failed: {str(e)}. Retrying in {delay} seconds...")
+                time.sleep(delay)
+                return self._make_request(method, endpoint, params, data, headers, retries_left - 1)
+            
+            if isinstance(e, requests.Timeout):
+                raise TimeoutError(
+                    message=f"Request timed out after {self.timeout} seconds",
+                    http_status=None
+                ) from e
             else:
-                raise APIError(
-                    f"API request failed: {response_data.get('detail', 'Unknown error')}",
-                    response.status_code,
-                    response_data,
-                )
-
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Network error: {str(e)}")
-            raise SwarmsError(f"Network error: {str(e)}")
-
-    # Async methods
-    async def async_get_health(self) -> Dict[str, Any]:
-        """
-        Check API health status asynchronously.
-
-        Returns:
-            Dict[str, Any]: Health status information
-        """
-        try:
-            logger.info("Checking API health")
-            response = await self._async_request("GET", "/health")
-            logger.info("API health check successful")
-            return response
-        except Exception as e:
-            logger.error(f"Health check failed: {str(e)}")
+                raise NetworkError(
+                    message=f"Network error: {str(e)}",
+                    http_status=None
+                ) from e
+        
+        except SwarmsError:
+            # Re-raise Swarms errors
             raise
-
-    async def async_create_swarm(
-        self,
-        name: str,
-        task: str,
-        agents: List[AgentSpec],
-        description: Optional[str] = None,
-        max_loops: int = 1,
-        swarm_type: Optional[str] = None,
-        rearrange_flow: Optional[str] = None,
-        return_history: bool = True,
-        rules: Optional[str] = None,
-        tasks: Optional[List[str]] = None,
-        messages: Optional[List[Dict[str, Any]]] = None,
-        stream: bool = False,
-        service_tier: str = "standard",
-    ) -> Dict[str, Any]:
+        
+        except Exception as e:
+            # Catch-all for unexpected errors
+            logger.error(f"Unexpected error: {str(e)}")
+            raise APIError(
+                message=f"Unexpected error: {str(e)}",
+                http_status=None
+            ) from e
+    
+    async def _make_async_request(
+        self, 
+        method: str, 
+        endpoint: str, 
+        params: Optional[Dict[str, Any]] = None,
+        data: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+        retries_left: Optional[int] = None
+    ):
         """
-        Create and run a swarm with specified configuration asynchronously.
-
+        Make an asynchronous HTTP request to the API.
+        
         Args:
-            name (str): Name of the swarm
-            task (str): Main task for the swarm
-            agents (List[AgentSpec]): List of agent specifications
-            description (Optional[str]): Swarm description
-            max_loops (int): Maximum execution loops
-            swarm_type (Optional[str]): Type of swarm architecture
-            rearrange_flow (Optional[str]): Flow rearrangement instructions
-            return_history (bool): Whether to return execution history
-            rules (Optional[str]): Swarm behavior rules
-            tasks (Optional[List[str]]): List of tasks
-            messages (Optional[List[Dict[str, Any]]]): List of messages
-            stream (bool): Whether to stream output
-            service_tier (str): Service tier for processing
-
+            method: HTTP method (GET, POST, PUT, DELETE)
+            endpoint: API endpoint (relative to base_url)
+            params: Query parameters
+            data: Request body data
+            headers: Additional headers
+            retries_left: Number of retries left
+        
         Returns:
-            Dict[str, Any]: Swarm execution results
+            Response data as a dictionary
         """
+        url = urljoin(self.base_url, endpoint)
+        
+        if retries_left is None:
+            retries_left = self.max_retries
+        
+        # Set up headers
+        request_headers = {
+            "Content-Type": "application/json",
+            "x-api-key": self.api_key
+        }
+        if headers:
+            request_headers.update(headers)
+        
+        # Create session if not already created
+        if self._session is None:
+            self._session = aiohttp.ClientSession()
+        
         try:
-            # Create swarm spec using Pydantic model for validation
-            swarm_spec = SwarmSpec(
-                name=name,
-                description=description,
-                agents=agents,
-                max_loops=max_loops,
-                swarm_type=swarm_type,
-                rearrange_flow=rearrange_flow,
-                task=task,
-                return_history=return_history,
-                rules=rules,
-                tasks=tasks,
-                messages=messages,
-                stream=stream,
-                service_tier=service_tier,
-            )
-
-            logger.info(f"Creating swarm: {name}")
-            response = await self._async_request(
-                "POST",
-                "/v1/swarm/completions",
-                data=swarm_spec.model_dump(exclude_none=True),
-            )
-            logger.info(f"Successfully created swarm: {name}")
-            return response
-
-        except Exception as e:
-            logger.error(f"Error creating swarm: {str(e)}")
+            logger.debug(f"{method} {url}")
+            if data:
+                logger.debug(f"Request data: {json.dumps(data, indent=2)}")
+            
+            async with self._session.request(
+                method=method,
+                url=url,
+                params=params,
+                json=data,
+                headers=request_headers,
+                timeout=self.timeout
+            ) as response:
+                # Try to parse JSON response
+                try:
+                    body = await response.json()
+                except ValueError:
+                    body = {"detail": await response.text()}
+                
+                # Handle error responses
+                if response.status >= 400:
+                    await _handle_async_error_response(response, body)
+                
+                logger.debug(f"Response: {json.dumps(body, indent=2) if isinstance(body, dict) else body}")
+                return body
+        
+        except aiohttp.ClientError as e:
+            # Retry on network errors with exponential backoff
+            if retries_left > 0:
+                delay = self.retry_delay * (2 ** (self.max_retries - retries_left))
+                logger.warning(f"Request failed: {str(e)}. Retrying in {delay} seconds...")
+                await asyncio.sleep(delay)
+                return await self._make_async_request(method, endpoint, params, data, headers, retries_left - 1)
+            
+            if isinstance(e, asyncio.TimeoutError):
+                raise TimeoutError(
+                    message=f"Request timed out after {self.timeout} seconds",
+                    http_status=None
+                ) from e
+            else:
+                raise NetworkError(
+                    message=f"Network error: {str(e)}",
+                    http_status=None
+                ) from e
+        
+        except SwarmsError:
+            # Re-raise Swarms errors
             raise
+        
+        except Exception as e:
+            # Catch-all for unexpected errors
+            logger.error(f"Unexpected error: {str(e)}")
+            raise APIError(
+                message=f"Unexpected error: {str(e)}",
+                http_status=None
+            ) from e
 
-    async def async_run_swarm(self, swarm_id: str) -> Dict[str, Any]:
+# ===== API Resources =====
+
+class BaseResource:
+    """Base class for API resources"""
+    def __init__(self, client):
+        self.client = client
+
+class AgentResource(BaseResource):
+    """API resource for agent operations"""
+    
+    def create(self, **kwargs) -> AgentCompletionResponse:
         """
-        Run a swarm with the specified ID asynchronously.
-
+        Create an agent completion.
+        
         Args:
-            swarm_id (str): ID of the swarm to run
-
+            agent_config: Configuration for the agent
+            task: The task to complete
+            history: Optional conversation history
+            
         Returns:
-            Dict[str, Any]: Swarm execution results
-        """
-        try:
-            logger.info(f"Running swarm: {swarm_id}")
-            response = await self._async_request("POST", f"/v1/swarm/{swarm_id}/run")
-            logger.info(f"Successfully ran swarm: {swarm_id}")
-            return response
-
-        except Exception as e:
-            logger.error(f"Error running swarm {swarm_id}: {str(e)}")
-            raise
-
-    async def async_get_swarm_logs(self, swarm_id: str) -> List[Dict[str, Any]]:
-        """
-        Get execution logs for a specific swarm asynchronously.
-
-        Args:
-            swarm_id (str): ID of the swarm
-
-        Returns:
-            List[Dict[str, Any]]: List of log entries
-        """
-        try:
-            logger.info(f"Fetching logs for swarm: {swarm_id}")
-            response = await self._async_request("GET", f"/v1/swarm/{swarm_id}/logs")
-            logger.info(f"Successfully fetched logs for swarm: {swarm_id}")
-            return response.get("logs", [])
-
-        except Exception as e:
-            logger.error(f"Error fetching logs for swarm {swarm_id}: {str(e)}")
-            raise
-
-    async def async_get_available_models(self) -> List[str]:
-        """
-        Get list of available models asynchronously.
-
-        Returns:
-            List[str]: List of available model names
-        """
-        try:
-            logger.info("Fetching available models")
-            response = await self._async_request("GET", "/v1/models/available")
-            logger.info("Successfully fetched available models")
-            return response.get("models", [])
-
-        except Exception as e:
-            logger.error(f"Error fetching available models: {str(e)}")
-            raise
-
-    async def async_get_swarm_types(self) -> List[str]:
-        """
-        Get list of available swarm types asynchronously.
-
-        Returns:
-            List[str]: List of available swarm types
-        """
-        try:
-            logger.info("Fetching available swarm types")
-            response = await self._async_request("GET", "/v1/swarms/available")
-            logger.info("Successfully fetched available swarm types")
-            return response.get("swarm_types", [])
-
-        except Exception as e:
-            logger.error(f"Error fetching available swarm types: {str(e)}")
-            raise
-
-    async def async_run_agent(
-        self,
-        agent_name: str,
-        task: str,
-        model_name: str = "gpt-4",
-        temperature: float = 0.7,
-        max_tokens: int = 1000,
-        system_prompt: Optional[str] = None,
-        description: Optional[str] = None,
-        auto_generate_prompt: bool = False,
-        role: str = "worker",
-        max_loops: int = 1,
-        tools_dictionary: Optional[List[Dict[str, Any]]] = None,
-    ) -> Dict[str, Any]:
-        """
-        Run a single agent asynchronously.
-
-        Args:
-            agent_name (str): Name of the agent
-            task (str): Task for the agent to complete
-            model_name (str): Model to use
-            temperature (float): Temperature for generation
-            max_tokens (int): Maximum tokens to generate
-            system_prompt (Optional[str]): System prompt for the agent
-            description (Optional[str]): Description of the agent
-            auto_generate_prompt (bool): Whether to auto-generate prompts
-            role (str): Role of the agent
-            max_loops (int): Maximum number of loops
-            tools_dictionary (Optional[List[Dict[str, Any]]]): Tools for the agent
-
-        Returns:
-            Dict[str, Any]: Agent execution results
-        """
-        try:
-            # Create agent spec using Pydantic model for validation
-            agent_spec = AgentSpec(
-                agent_name=agent_name,
-                description=description,
-                system_prompt=system_prompt,
-                model_name=model_name,
-                auto_generate_prompt=auto_generate_prompt,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                role=role,
-                max_loops=max_loops,
-                tools_dictionary=tools_dictionary,
+            AgentCompletionResponse
+            
+        Example:
+            ```python
+            response = client.agent.create(
+                agent_config={
+                    "agent_name": "Researcher",
+                    "description": "Conducts in-depth research",
+                    "model_name": "gpt-4o"
+                },
+                task="Research the impact of quantum computing on cryptography"
             )
-
-            # Create completion request
-            completion = AgentCompletion(agent_config=agent_spec, task=task)
-
-            logger.info(f"Running agent: {agent_name}")
-            response = await self._async_request(
-                "POST",
-                "/v1/agent/completions",
-                data=completion.model_dump(exclude_none=True),
-            )
-            logger.info(f"Successfully ran agent: {agent_name}")
-            return response
-
-        except Exception as e:
-            logger.error(f"Error running agent {agent_name}: {str(e)}")
-            raise
-
-    async def async_run_agent_batch(
-        self,
-        agents: List[Dict[str, Any]],
-    ) -> List[Dict[str, Any]]:
+            ```
         """
-        Run multiple agents in parallel asynchronously.
-
+        # Convert agent_config dict to AgentSpec if needed
+        if isinstance(kwargs.get('agent_config'), dict):
+            kwargs['agent_config'] = AgentSpec(**kwargs['agent_config'])
+        
+        # Create and validate request
+        request = AgentCompletion(**kwargs)
+        
+        # Make API request
+        data = self.client._make_request('POST', 'v1/agent/completions', data=request.model_dump())
+        return _parse_response(AgentCompletionResponse, data)
+    
+    def create_batch(self, completions: List[Union[Dict, AgentCompletion]]) -> List[AgentCompletionResponse]:
+        """
+        Create multiple agent completions in batch.
+        
         Args:
-            agents (List[Dict[str, Any]]): List of agent configurations
-
+            completions: List of agent completion requests
+            
         Returns:
-            List[Dict[str, Any]]: Results from all agents
+            List of AgentCompletionResponse
+            
+        Example:
+            ```python
+            responses = client.agent.create_batch([
+                {
+                    "agent_config": {
+                        "agent_name": "Researcher",
+                        "model_name": "gpt-4o-mini"
+                    },
+                    "task": "Summarize the latest quantum computing research"
+                },
+                {
+                    "agent_config": {
+                        "agent_name": "Writer",
+                        "model_name": "gpt-4o"
+                    },
+                    "task": "Write a blog post about AI safety"
+                }
+            ])
+            ```
         """
-        try:
-            logger.info(f"Running batch of {len(agents)} agents")
-            response = await self._async_request(
-                "POST", "/v1/agent/batch/completions", data={"agents": agents}
-            )
-            logger.info(f"Successfully ran batch of {len(agents)} agents")
-            return response
-
-        except Exception as e:
-            logger.error(f"Error running agent batch: {str(e)}")
-            raise
-
-    async def async_run_swarm_batch(
-        self,
-        swarms: List[Dict[str, Any]],
-    ) -> List[Dict[str, Any]]:
+        # Convert each completion to AgentCompletion if it's a dict
+        request_data = []
+        for completion in completions:
+            if isinstance(completion, dict):
+                # Convert agent_config dict to AgentSpec if needed
+                if isinstance(completion.get('agent_config'), dict):
+                    completion['agent_config'] = AgentSpec(**completion['agent_config'])
+                request_data.append(AgentCompletion(**completion).model_dump())
+            else:
+                request_data.append(completion.model_dump())
+        
+        # Make API request
+        data = self.client._make_request('POST', 'v1/agent/batch/completions', data=request_data)
+        
+        # Parse responses
+        return [_parse_response(AgentCompletionResponse, item) for item in data]
+    
+    async def acreate(self, **kwargs) -> AgentCompletionResponse:
         """
-        Run multiple swarms in parallel asynchronously.
-
+        Create an agent completion asynchronously.
+        
         Args:
-            swarms (List[Dict[str, Any]]): List of swarm configurations
-
+            agent_config: Configuration for the agent
+            task: The task to complete
+            history: Optional conversation history
+            
         Returns:
-            List[Dict[str, Any]]: Results from all swarms
+            AgentCompletionResponse
         """
-        try:
-            logger.info(f"Running batch of {len(swarms)} swarms")
-            response = await self._async_request(
-                "POST", "/v1/swarm/batch/completions", data={"swarms": swarms}
-            )
-            logger.info(f"Successfully ran batch of {len(swarms)} swarms")
-            return response
-
-        except Exception as e:
-            logger.error(f"Error running swarm batch: {str(e)}")
-            raise
-
-    async def async_get_api_logs(self) -> List[Dict[str, Any]]:
+        # Convert agent_config dict to AgentSpec if needed
+        if isinstance(kwargs.get('agent_config'), dict):
+            kwargs['agent_config'] = AgentSpec(**kwargs['agent_config'])
+        
+        # Create and validate request
+        request = AgentCompletion(**kwargs)
+        
+        # Make API request
+        data = await self.client._make_async_request('POST', 'v1/agent/completions', data=request.model_dump())
+        return _parse_response(AgentCompletionResponse, data)
+    
+    async def acreate_batch(self, completions: List[Union[Dict, AgentCompletion]]) -> List[AgentCompletionResponse]:
         """
-        Get all API request logs for the current API key asynchronously.
-
-        Returns:
-            List[Dict[str, Any]]: List of API request logs
-        """
-        try:
-            logger.info("Fetching API logs")
-            response = await self._async_request("GET", "/v1/swarm/logs")
-            logger.info("Successfully fetched API logs")
-            return response.get("logs", [])
-
-        except Exception as e:
-            logger.error(f"Error fetching API logs: {str(e)}")
-            raise
-
-    # Sync methods
-    def get_health(self) -> Dict[str, Any]:
-        """
-        Check API health status synchronously.
-
-        Returns:
-            Dict[str, Any]: Health status information
-        """
-        try:
-            logger.info("Checking API health")
-            response = self._sync_request("GET", "/health")
-            logger.info("API health check successful")
-            return response
-        except Exception as e:
-            logger.error(f"Health check failed: {str(e)}")
-            raise
-
-    def create_swarm(
-        self,
-        name: str,
-        task: str,
-        agents: List[AgentSpec],
-        description: Optional[str] = None,
-        max_loops: int = 1,
-        swarm_type: Optional[str] = None,
-        rearrange_flow: Optional[str] = None,
-        return_history: bool = True,
-        rules: Optional[str] = None,
-        tasks: Optional[List[str]] = None,
-        messages: Optional[List[Dict[str, Any]]] = None,
-        stream: bool = False,
-        service_tier: str = "standard",
-    ) -> Dict[str, Any]:
-        """
-        Create and run a swarm with specified configuration synchronously.
-
+        Create multiple agent completions in batch asynchronously.
+        
         Args:
-            name (str): Name of the swarm
-            task (str): Main task for the swarm
-            agents (List[AgentSpec]): List of agent specifications
-            description (Optional[str]): Swarm description
-            max_loops (int): Maximum execution loops
-            swarm_type (Optional[str]): Type of swarm architecture
-            rearrange_flow (Optional[str]): Flow rearrangement instructions
-            return_history (bool): Whether to return execution history
-            rules (Optional[str]): Swarm behavior rules
-            tasks (Optional[List[str]]): List of tasks
-            messages (Optional[List[Dict[str, Any]]]): List of messages
-            stream (bool): Whether to stream output
-            service_tier (str): Service tier for processing
-
+            completions: List of agent completion requests
+            
         Returns:
-            Dict[str, Any]: Swarm execution results
+            List of AgentCompletionResponse
         """
-        try:
-            # Create swarm spec using Pydantic model for validation
-            swarm_spec = SwarmSpec(
-                name=name,
-                description=description,
-                agents=agents,
-                max_loops=max_loops,
-                swarm_type=swarm_type,
-                rearrange_flow=rearrange_flow,
-                task=task,
-                return_history=return_history,
-                rules=rules,
-                tasks=tasks,
-                messages=messages,
-                stream=stream,
-                service_tier=service_tier,
-            )
+        # Convert each completion to AgentCompletion if it's a dict
+        request_data = []
+        for completion in completions:
+            if isinstance(completion, dict):
+                # Convert agent_config dict to AgentSpec if needed
+                if isinstance(completion.get('agent_config'), dict):
+                    completion['agent_config'] = AgentSpec(**completion['agent_config'])
+                request_data.append(AgentCompletion(**completion).model_dump())
+            else:
+                request_data.append(completion.model_dump())
+        
+        # Make API request
+        data = await self.client._make_async_request('POST', 'v1/agent/batch/completions', data=request_data)
+        
+        # Parse responses
+        return [_parse_response(AgentCompletionResponse, item) for item in data]
 
-            logger.info(f"Creating swarm: {name}")
-            response = self._sync_request(
-                "POST",
-                "/v1/swarm/completions",
-                data=swarm_spec.model_dump(exclude_none=True),
-            )
-            logger.info(f"Successfully created swarm: {name}")
-            return response
-
-        except Exception as e:
-            logger.error(f"Error creating swarm: {str(e)}")
-            raise
-
-    def run_swarm(self, swarm_id: str) -> Dict[str, Any]:
+class SwarmResource(BaseResource):
+    """API resource for swarm operations"""
+    
+    def create(self, **kwargs) -> SwarmCompletionResponse:
         """
-        Run a swarm with the specified ID synchronously.
-
+        Create a swarm completion.
+        
         Args:
-            swarm_id (str): ID of the swarm to run
-
+            name: Name of the swarm
+            description: Description of the swarm
+            agents: List of agent specifications
+            max_loops: Maximum number of loops
+            swarm_type: Type of swarm
+            task: The task to complete
+            tasks: List of tasks for batch processing
+            messages: List of messages to process
+            service_tier: Service tier ('standard' or 'flex')
+            
         Returns:
-            Dict[str, Any]: Swarm execution results
-        """
-        try:
-            logger.info(f"Running swarm: {swarm_id}")
-            response = self._sync_request("POST", f"/v1/swarm/{swarm_id}/run")
-            logger.info(f"Successfully ran swarm: {swarm_id}")
-            return response
-
-        except Exception as e:
-            logger.error(f"Error running swarm {swarm_id}: {str(e)}")
-            raise
-
-    def get_swarm_logs(self, swarm_id: str) -> List[Dict[str, Any]]:
-        """
-        Get execution logs for a specific swarm synchronously.
-
-        Args:
-            swarm_id (str): ID of the swarm
-
-        Returns:
-            List[Dict[str, Any]]: List of log entries
-        """
-        try:
-            logger.info(f"Fetching logs for swarm: {swarm_id}")
-            response = self._sync_request("GET", f"/v1/swarm/{swarm_id}/logs")
-            logger.info(f"Successfully fetched logs for swarm: {swarm_id}")
-            return response.get("logs", [])
-
-        except Exception as e:
-            logger.error(f"Error fetching logs for swarm {swarm_id}: {str(e)}")
-            raise
-
-    def get_available_models(self) -> List[str]:
-        """
-        Get list of available models synchronously.
-
-        Returns:
-            List[str]: List of available model names
-        """
-        try:
-            logger.info("Fetching available models")
-            response = self._sync_request("GET", "/v1/models/available")
-            logger.info("Successfully fetched available models")
-            return response.get("models", [])
-
-        except Exception as e:
-            logger.error(f"Error fetching available models: {str(e)}")
-            raise
-
-    def run_agent(
-        self,
-        agent_name: str,
-        task: str,
-        model_name: str = "gpt-4",
-        temperature: float = 0.7,
-        max_tokens: int = 1000,
-        system_prompt: Optional[str] = None,
-        description: Optional[str] = None,
-        auto_generate_prompt: bool = False,
-        role: str = "worker",
-        max_loops: int = 1,
-        tools_dictionary: Optional[List[Dict[str, Any]]] = None,
-    ) -> Dict[str, Any]:
-        """
-        Run a single agent synchronously.
-
-        Args:
-            agent_name (str): Name of the agent
-            task (str): Task for the agent to complete
-            model_name (str): Model to use
-            temperature (float): Temperature for generation
-            max_tokens (int): Maximum tokens to generate
-            system_prompt (Optional[str]): System prompt for the agent
-            description (Optional[str]): Description of the agent
-            auto_generate_prompt (bool): Whether to auto-generate prompts
-            role (str): Role of the agent
-            max_loops (int): Maximum number of loops
-            tools_dictionary (Optional[List[Dict[str, Any]]]): Tools for the agent
-
-        Returns:
-            Dict[str, Any]: Agent execution results
-        """
-        try:
-            # Create agent spec using Pydantic model for validation
-            agent_spec = AgentSpec(
-                agent_name=agent_name,
-                description=description,
-                system_prompt=system_prompt,
-                model_name=model_name,
-                auto_generate_prompt=auto_generate_prompt,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                role=role,
-                max_loops=max_loops,
-                tools_dictionary=tools_dictionary,
+            SwarmCompletionResponse
+            
+        Example:
+            ```python
+            response = client.swarm.create(
+                name="Research Swarm",
+                swarm_type="SequentialWorkflow",
+                task="Research quantum computing advances in 2024",
+                agents=[
+                    {
+                        "agent_name": "Researcher",
+                        "description": "Conducts in-depth research",
+                        "model_name": "gpt-4o"
+                    },
+                    {
+                        "agent_name": "Critic",
+                        "description": "Evaluates arguments for flaws",
+                        "model_name": "gpt-4o-mini"
+                    }
+                ]
             )
-
-            # Create completion request
-            completion = AgentCompletion(agent_config=agent_spec, task=task)
-
-            logger.info(f"Running agent: {agent_name}")
-            response = self._sync_request(
-                "POST",
-                "/v1/agent/completions",
-                data=completion.model_dump(exclude_none=True),
-            )
-            logger.info(f"Successfully ran agent: {agent_name}")
-            return response
-
-        except Exception as e:
-            logger.error(f"Error running agent {agent_name}: {str(e)}")
-            raise
-
-    def run_agent_batch(
-        self,
-        agents: List[Dict[str, Any]],
-    ) -> List[Dict[str, Any]]:
+            ```
         """
-        Run multiple agents in parallel synchronously.
-
+        # Process agents if they are dicts
+        if 'agents' in kwargs and kwargs['agents']:
+            agents = []
+            for agent in kwargs['agents']:
+                if isinstance(agent, dict):
+                    agents.append(AgentSpec(**agent))
+                else:
+                    agents.append(agent)
+            kwargs['agents'] = agents
+        
+        # Create and validate request
+        request = SwarmSpec(**kwargs)
+        
+        # Make API request
+        data = self.client._make_request('POST', 'v1/swarm/completions', data=request.model_dump())
+        return _parse_response(SwarmCompletionResponse, data)
+    
+    def create_batch(self, swarms: List[Union[Dict, SwarmSpec]]) -> List[SwarmCompletionResponse]:
+        """
+        Create multiple swarm completions in batch.
+        
         Args:
-            agents (List[Dict[str, Any]]): List of agent configurations
-
+            swarms: List of swarm specifications
+            
         Returns:
-            List[Dict[str, Any]]: Results from all agents
+            List of SwarmCompletionResponse
+            
+        Example:
+            ```python
+            responses = client.swarm.create_batch([
+                {
+                    "name": "Research Swarm",
+                    "swarm_type": "auto",
+                    "task": "Research quantum computing",
+                    "agents": [
+                        {"agent_name": "Researcher", "model_name": "gpt-4o"}
+                    ]
+                },
+                {
+                    "name": "Writing Swarm",
+                    "swarm_type": "SequentialWorkflow",
+                    "task": "Write a blog post about AI safety",
+                    "agents": [
+                        {"agent_name": "Writer", "model_name": "gpt-4o"}
+                    ]
+                }
+            ])
+            ```
         """
-        try:
-            logger.info(f"Running batch of {len(agents)} agents")
-            response = self._sync_request(
-                "POST", "/v1/agent/batch/completions", data={"agents": agents}
-            )
-            logger.info(f"Successfully ran batch of {len(agents)} agents")
-            return response
-
-        except Exception as e:
-            logger.error(f"Error running agent batch: {str(e)}")
-            raise
-
-    def get_swarm_types(self) -> List[str]:
+        # Process each swarm
+        request_data = []
+        for swarm in swarms:
+            if isinstance(swarm, dict):
+                # Process agents if they are dicts
+                if 'agents' in swarm and swarm['agents']:
+                    agents = []
+                    for agent in swarm['agents']:
+                        if isinstance(agent, dict):
+                            agents.append(AgentSpec(**agent))
+                        else:
+                            agents.append(agent)
+                    swarm['agents'] = agents
+                
+                request_data.append(SwarmSpec(**swarm).model_dump())
+            else:
+                request_data.append(swarm.model_dump())
+        
+        # Make API request
+        data = self.client._make_request('POST', 'v1/swarm/batch/completions', data=request_data)
+        
+        # Parse responses
+        return [_parse_response(SwarmCompletionResponse, item) for item in data]
+    
+    def list_types(self) -> SwarmTypesResponse:
         """
-        Get list of available swarm types synchronously.
-
+        List available swarm types.
+        
         Returns:
-            List[str]: List of available swarm types
+            SwarmTypesResponse
+            
+        Example:
+            ```python
+            response = client.swarm.list_types()
+            print(response.swarm_types)
+            ```
         """
-        try:
-            logger.info("Fetching available swarm types")
-            response = self._sync_request("GET", "/v1/swarms/available")
-            logger.info("Successfully fetched available swarm types")
-            return response.get("swarm_types", [])
-
-        except Exception as e:
-            logger.error(f"Error fetching available swarm types: {str(e)}")
-            raise
-
-    def get_api_logs(self) -> List[Dict[str, Any]]:
+        data = self.client._make_request('GET', 'v1/swarms/available')
+        return _parse_response(SwarmTypesResponse, data)
+    
+    async def acreate(self, **kwargs) -> SwarmCompletionResponse:
         """
-        Get all API request logs for the current API key synchronously.
-
+        Create a swarm completion asynchronously.
+        
+        Args:
+            name: Name of the swarm
+            description: Description of the swarm
+            agents: List of agent specifications
+            max_loops: Maximum number of loops
+            swarm_type: Type of swarm
+            task: The task to complete
+            tasks: List of tasks for batch processing
+            messages: List of messages to process
+            service_tier: Service tier ('standard' or 'flex')
+            
         Returns:
-            List[Dict[str, Any]]: List of API request logs
+            SwarmCompletionResponse
         """
-        try:
-            logger.info("Fetching API logs")
-            response = self._sync_request("GET", "/v1/swarm/logs")
-            logger.info("Successfully fetched API logs")
-            return response.get("logs", [])
+        # Process agents if they are dicts
+        if 'agents' in kwargs and kwargs['agents']:
+            agents = []
+            for agent in kwargs['agents']:
+                if isinstance(agent, dict):
+                    agents.append(AgentSpec(**agent))
+                else:
+                    agents.append(agent)
+            kwargs['agents'] = agents
+        
+        # Create and validate request
+        request = SwarmSpec(**kwargs)
+        
+        # Make API request
+        data = await self.client._make_async_request('POST', 'v1/swarm/completions', data=request.model_dump())
+        return _parse_response(SwarmCompletionResponse, data)
+    
+    async def acreate_batch(self, swarms: List[Union[Dict, SwarmSpec]]) -> List[SwarmCompletionResponse]:
+        """
+        Create multiple swarm completions in batch asynchronously.
+        
+        Args:
+            swarms: List of swarm specifications
+            
+        Returns:
+            List of SwarmCompletionResponse
+        """
+        # Process each swarm
+        request_data = []
+        for swarm in swarms:
+            if isinstance(swarm, dict):
+                # Process agents if they are dicts
+                if 'agents' in swarm and swarm['agents']:
+                    agents = []
+                    for agent in swarm['agents']:
+                        if isinstance(agent, dict):
+                            agents.append(AgentSpec(**agent))
+                        else:
+                            agents.append(agent)
+                    swarm['agents'] = agents
+                
+                request_data.append(SwarmSpec(**swarm).model_dump())
+            else:
+                request_data.append(swarm.model_dump())
+        
+        # Make API request
+        data = await self.client._make_async_request('POST', 'v1/swarm/batch/completions', data=request_data)
+        
+        # Parse responses
+        return [_parse_response(SwarmCompletionResponse, item) for item in data]
+    
+    async def alist_types(self) -> SwarmTypesResponse:
+        """
+        List available swarm types asynchronously.
+        
+        Returns:
+            SwarmTypesResponse
+        """
+        data = await self.client._make_async_request('GET', 'v1/swarms/available')
+        return _parse_response(SwarmTypesResponse, data)
 
-        except Exception as e:
-            logger.error(f"Error fetching API logs: {str(e)}")
-            raise
+class ModelsResource(BaseResource):
+    """API resource for model operations"""
+    
+    def list(self) -> ModelsResponse:
+        """
+        List available models.
+        
+        Returns:
+            ModelsResponse
+            
+        Example:
+            ```python
+            response = client.models.list()
+            print(response.models)
+            ```
+        """
+        data = self.client._make_request('GET', 'v1/models/available')
+        return _parse_response(ModelsResponse, data)
+    
+    async def alist(self) -> ModelsResponse:
+        """
+        List available models asynchronously.
+        
+        Returns:
+            ModelsResponse
+        """
+        data = await self.client._make_async_request('GET', 'v1/models/available')
+        return _parse_response(ModelsResponse, data)
+
+class LogsResource(BaseResource):
+    """API resource for log operations"""
+    
+    def list(self) -> LogsResponse:
+        """
+        List API request logs.
+        
+        Returns:
+            LogsResponse
+            
+        Example:
+            ```python
+            response = client.logs.list()
+            print(f"Found {response.count} logs")
+            ```
+        """
+        data = self.client._make_request('GET', 'v1/swarm/logs')
+        return _parse_response(LogsResponse, data)
+    
+    async def alist(self) -> LogsResponse:
+        """
+        List API request logs asynchronously.
+        
+        Returns:
+            LogsResponse
+        """
+        data = await self.client._make_async_request('GET', 'v1/swarm/logs')
+        return _parse_response(LogsResponse, data)
+
+# Simplified default client for convenience
+client = Swarms()

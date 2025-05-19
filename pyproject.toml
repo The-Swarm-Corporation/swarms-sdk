@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "swarms-client"
-version = "0.1.2"
+version = "0.1.3"
 description = "A production-grade Python client for the Swarms API"
 authors = ["Swarms <support@swarms.world>"]
 readme = "README.md"
