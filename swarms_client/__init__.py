@@ -1,14 +1,7 @@
-"""
-Swarms API Client
-
-A production-grade Python client for the Swarms API with both synchronous and asynchronous interfaces.
-"""
-
 from swarms_client.client import (
     # Main client
-    Swarms,
+    SwarmsClient,
     client,
-    
     # Models
     SwarmsObject,
     AgentTool,
@@ -23,7 +16,6 @@ from swarms_client.client import (
     LogsResponse,
     SwarmTypesResponse,
     ModelsResponse,
-    
     # Exceptions
     SwarmsError,
     AuthenticationError,
@@ -33,14 +25,12 @@ from swarms_client.client import (
     InsufficientCreditsError,
     TimeoutError,
     NetworkError,
-    
     # Resources
     BaseResource,
     AgentResource,
     SwarmResource,
     ModelsResource,
     LogsResource,
-    
     # Types
     ModelNameType,
     AgentNameType,
@@ -50,15 +40,14 @@ from swarms_client.client import (
 
 __all__ = [
     # Main client
-    "Swarms",
+    "SwarmsClient",
     "client",
-    
     # Models
     "SwarmsObject",
     "AgentTool",
     "AgentSpec",
     "AgentCompletion",
-    "ScheduleSpec", 
+    "ScheduleSpec",
     "SwarmSpec",
     "Usage",
     "AgentCompletionResponse",
@@ -67,7 +56,6 @@ __all__ = [
     "LogsResponse",
     "SwarmTypesResponse",
     "ModelsResponse",
-    
     # Exceptions
     "SwarmsError",
     "AuthenticationError",
@@ -77,18 +65,14 @@ __all__ = [
     "InsufficientCreditsError",
     "TimeoutError",
     "NetworkError",
-    
     # Resources
     "BaseResource",
     "AgentResource",
     "SwarmResource",
     "ModelsResource",
     "LogsResource",
-    
     # Types
     "ModelNameType",
     "AgentNameType",
     "SwarmTypeType",
 ]
-
-
