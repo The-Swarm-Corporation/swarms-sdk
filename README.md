@@ -1,194 +1,288 @@
 # Swarms SDK
 
-A production-grade Python client for the Swarms API, providing a simple and intuitive interface for creating and managing AI swarms.
+[![PyPI version](https://badge.fury.io/py/swarms-client.svg)](https://badge.fury.io/py/swarms-client)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-## Features
+A production-grade Python SDK for the Swarms API, designed for enterprise applications requiring high reliability, scalability, and maintainability.
 
-- 🚀 Async-first design with comprehensive error handling
-- 📝 Extensive logging with loguru
-- 🔄 Automatic retries with exponential backoff
-- 🔒 Secure API key management
-- 📊 Detailed telemetry and monitoring
-- 🎯 Type hints and validation
-- 📚 Comprehensive documentation
+> 📚 For complete documentation, visit [Swarms API Python Client Documentation](https://docs.swarms.world/en/latest/swarms_cloud/python_client/)
 
-## Installation
+## Enterprise Features
+
+- 🚀 **High Performance**: Async-first design with connection pooling and advanced session management
+- 🛡️ **Enterprise Security**: Secure API key management and comprehensive error handling
+- 📊 **Observability**: Extensive logging with loguru and detailed telemetry
+- 🔄 **Reliability**: Automatic retries with exponential backoff and circuit breaker pattern
+- 🎯 **Type Safety**: Full type hints and validation with Pydantic
+- 📚 **Documentation**: Comprehensive API reference and usage examples
+- 🧪 **Testing**: Comprehensive test suite with detailed reporting
+- 🔒 **Security**: Regular security audits and dependency updates
+
+## Getting Started
+
+### 1. Get Your API Key
+
+First, obtain your API key from the [Swarms Platform](https://swarms.world/platform/api-keys). Keep your API key secure and never expose it in client-side code or version control.
+
+### 2. Installation
 
 ```bash
 pip install swarms-client
 ```
 
-## Quick Start
+## API Resources
+
+### Agent Resource
 
 ```python
-import asyncio
 from swarms_client import SwarmsClient
 
-async def main():
-    # Initialize the client
-    client = SwarmsClient(api_key="your-api-key")
+client = SwarmsClient(api_key="your-api-key")
 
-    # Create a swarm
-    swarm = await client.create_swarm(
-        name="my-swarm",
-        task="Analyze this data",
-        agents=[
-            {
-                "agent_name": "analyzer",
-                "model_name": "gpt-4",
-                "role": "worker"
-            }
-        ]
-    )
+# Create a single agent completion
+response = client.agent.create(
+    agent_config={
+        "agent_name": "researcher",
+        "model_name": "gpt-4",
+        "role": "researcher"
+    },
+    task="Research quantum computing"
+)
 
-    # Run the swarm
-    result = await client.run_swarm(swarm["id"])
-    print(result)
+# Create multiple agent completions in batch
+responses = client.agent.create_batch([
+    {
+        "agent_config": {
+            "agent_name": "researcher",
+            "model_name": "gpt-4"
+        },
+        "task": "Research topic 1"
+    },
+    {
+        "agent_config": {
+            "agent_name": "writer",
+            "model_name": "gpt-4"
+        },
+        "task": "Write about topic 2"
+    }
+])
 
-# Run the async function
-asyncio.run(main())
+# Async versions
+async_response = await client.agent.acreate(...)
+async_responses = await client.agent.acreate_batch(...)
 ```
 
-## API Reference
+### Swarm Resource
 
-### SwarmsClient
+```python
+# Create a swarm
+swarm = client.swarm.create(
+    name="research-swarm",
+    swarm_type="SequentialWorkflow",
+    task="Research and analyze quantum computing",
+    agents=[
+        {
+            "agent_name": "researcher",
+            "model_name": "gpt-4",
+            "role": "researcher"
+        },
+        {
+            "agent_name": "analyst",
+            "model_name": "gpt-4",
+            "role": "analyst"
+        }
+    ]
+)
 
-The main client class for interacting with the Swarms API.
+# Create multiple swarms in batch
+swarms = client.swarm.create_batch([
+    {
+        "name": "swarm-1",
+        "task": "Task 1",
+        "agents": [...]
+    },
+    {
+        "name": "swarm-2",
+        "task": "Task 2",
+        "agents": [...]
+    }
+])
 
-#### Initialization
+# List available swarm types
+swarm_types = client.swarm.list_types()
+
+# Async versions
+async_swarm = await client.swarm.acreate(...)
+async_swarms = await client.swarm.acreate_batch(...)
+async_types = await client.swarm.alist_types()
+```
+
+### Models Resource
+
+```python
+# List available models
+models = client.models.list()
+
+# Async version
+async_models = await client.models.alist()
+```
+
+### Logs Resource
+
+```python
+# List API request logs
+logs = client.logs.list()
+
+# Async version
+async_logs = await client.logs.alist()
+```
+
+## Advanced Features
+
+### Connection Pooling
 
 ```python
 client = SwarmsClient(
-    api_key="your-api-key",  # Optional: Can also use SWARMS_API_KEY env var
-    base_url="https://api.swarms.world",  # Optional: Default API URL
-    timeout=60,  # Optional: Request timeout in seconds
-    max_retries=3  # Optional: Maximum retry attempts
+    api_key="your-api-key",
+    pool_connections=100,  # Number of connection pools
+    pool_maxsize=100,      # Maximum connections in pool
+    keep_alive_timeout=5   # Keep-alive timeout in seconds
 )
 ```
 
-#### Methods
-
-##### create_swarm
-
-Create a new swarm with specified configuration.
+### Circuit Breaker
 
 ```python
-swarm = await client.create_swarm(
-    name="my-swarm",
-    task="Analyze this data",
-    agents=[
-        {
-            "agent_name": "analyzer",
-            "model_name": "gpt-4",
-            "role": "worker"
-        }
-    ],
-    description="Optional description",
-    max_loops=1,
-    swarm_type="SequentialWorkflow",
-    service_tier="standard"
+client = SwarmsClient(
+    api_key="your-api-key",
+    circuit_breaker_threshold=5,  # Failures before circuit opens
+    circuit_breaker_timeout=60    # Seconds before retry
 )
 ```
 
-##### run_swarm
-
-Run a swarm with the specified ID.
+### Caching
 
 ```python
-result = await client.run_swarm(swarm_id="swarm-123")
+client = SwarmsClient(
+    api_key="your-api-key",
+    enable_cache=True  # Enable in-memory caching
+)
+
+# Clear cache manually
+client.clear_cache()
 ```
 
-##### get_swarm_logs
-
-Get execution logs for a specific swarm.
-
-```python
-logs = await client.get_swarm_logs(swarm_id="swarm-123")
-```
-
-##### get_available_models
-
-Get list of available models.
-
-```python
-models = await client.get_available_models()
-```
-
-##### get_swarm_types
-
-Get list of available swarm types.
-
-```python
-swarm_types = await client.get_swarm_types()
-```
-
-### Error Handling
-
-The SDK provides custom exceptions for different error scenarios:
+## Error Handling
 
 ```python
 from swarms_client import (
     SwarmsError,
     AuthenticationError,
     RateLimitError,
-    ValidationError,
-    APIError
+    APIError,
+    InvalidRequestError,
+    InsufficientCreditsError,
+    TimeoutError,
+    NetworkError
 )
 
 try:
-    result = await client.run_swarm(swarm_id)
+    response = client.agent.create(...)
 except AuthenticationError as e:
-    print("Authentication failed:", e)
+    print(f"Authentication error: {e}")
 except RateLimitError as e:
-    print("Rate limit exceeded:", e)
+    print(f"Rate limit exceeded: {e}")
 except APIError as e:
-    print(f"API error (status {e.status_code}):", e)
+    print(f"API error: {e}")
 except SwarmsError as e:
-    print("Other error:", e)
+    print(f"Other error: {e}")
 ```
 
-### Logging
+## Testing
 
-The SDK uses loguru for comprehensive logging. Logs are written to both console and file:
+The SDK includes a comprehensive test suite that validates all core functionality:
 
-```python
-import loguru
+```bash
+# Run the test suite
+python test_client.py
 
-# Configure custom logging
-loguru.logger.add(
-    "custom.log",
-    rotation="100 MB",
-    retention="7 days",
-    level="DEBUG"
-)
+# View the test report
+cat test_report.md
 ```
-
-## Best Practices
-
-1. **API Key Management**
-   - Use environment variables for API keys
-   - Never commit API keys to version control
-   - Rotate API keys regularly
-
-2. **Error Handling**
-   - Always wrap API calls in try-except blocks
-   - Handle specific exceptions appropriately
-   - Implement retry logic for transient failures
-
-3. **Resource Management**
-   - Use async context manager for proper session cleanup
-   - Close client sessions when done
-   - Monitor memory usage with large swarms
-
-4. **Performance**
-   - Use appropriate service tiers
-   - Implement caching where appropriate
-   - Monitor API rate limits
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+We welcome contributions to make the SDK even more robust and feature-rich. Here's how you can help:
+
+1. **Report Issues**
+   - Use the GitHub issue tracker
+   
+   - Include detailed reproduction steps
+   
+   - Provide error logs and stack traces
+   
+   - Specify your environment details
+
+2. **Submit Pull Requests**
+   - Fork the repository
+   
+   - Create a feature branch
+   
+   - Write tests for new features
+   
+   - Update documentation
+   
+   - Submit a PR with a clear description
+
+3. **Development Setup**
+   ```bash
+   # Clone the repository
+   git clone https://github.com/The-Swarm-Corporation/swarms-sdk.git
+   cd swarms-sdk
+
+   # Create virtual environment
+   python -m venv venv
+   source venv/bin/activate  # or `venv\Scripts\activate` on Windows
+
+   # Install dependencies
+   pip install -e ".[dev]"
+   ```
+
+4. **Code Quality**
+   - Follow PEP 8 style guide
+   
+   - Use type hints
+   
+   - Write docstrings
+   
+   - Run linters: `flake8`, `mypy`
+   
+   - Format code: `black`
+
+## Enterprise Support
+
+For enterprise customers, we offer:
+
+- Priority support
+
+- Custom feature development
+
+- SLA guarantees
+
+- Security audits
+
+- Performance optimization
+
+- Training and documentation
+
+Contact our enterprise team at enterprise@swarms.world
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Security
+
+For security concerns, please email security@swarms.world
