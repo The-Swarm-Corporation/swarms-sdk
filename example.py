@@ -4,10 +4,6 @@ from swarms_client.client import SwarmsClient
 
 async def main():
     async with SwarmsClient() as client:
-        # # List available models asynchronously
-        # models = await client.models.alist()
-        # print(f"Available models: {models.models}")
-
         # Create an agent completion asynchronously
         response = await client.agent.acreate(
             agent_config={
@@ -22,7 +18,10 @@ async def main():
             task="Write a short story about an AI and human friendship",
         )
 
-        print(f"Result: {response}")
+        # print(f"Result: {response}")
+        # print(json.dumps(response, indent=4))
+        # print(type(response))
+        print(response.model_dump_json(indent=4))
 
 
 if __name__ == "__main__":

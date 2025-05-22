@@ -6,7 +6,6 @@ Uses simple functions and loguru for logging.
 import asyncio
 from datetime import datetime
 from typing import Any
-from loguru import logger
 from swarms_client.client import (
     SwarmsClient,
     SwarmCompletionResponse,
@@ -14,15 +13,7 @@ from swarms_client.client import (
     LogEntry,
     LogsResponse,
 )
-
-# Configure logger
-logger.remove()
-logger.add(
-    "test_results.log",
-    format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
-    level="INFO",
-    rotation="1 day",
-)
+from loguru import logger
 
 # Test data
 TEST_AGENT_CONFIG = {
@@ -133,7 +124,6 @@ def test_agent_completion():
 
         print(response_with_history)
         assert response_with_history is not None
-        
 
         log_test_result("test_agent_completion", True)
         return True
@@ -166,7 +156,7 @@ def test_agent_batch_completion():
         ]
 
         responses = client.agent.create_batch(completions)
-        
+
         print(responses)
 
         # if not isinstance(responses, list):
