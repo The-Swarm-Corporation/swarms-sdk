@@ -1213,6 +1213,10 @@ class ModelsResource(BaseResource):
         return _parse_response(ModelsResponse, data)
 
     @cached(ttl=3600)  # Cache for 1 hour
+    def list_models(self) -> ModelsResponse:
+        return self.list()
+
+    @cached(ttl=3600)  # Cache for 1 hour
     async def alist(self) -> ModelsResponse:
         """List available models asynchronously."""
         data = await self.client._make_async_request("GET", "v1/models/available")
