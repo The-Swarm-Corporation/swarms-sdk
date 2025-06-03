@@ -176,17 +176,27 @@ class Usage(SwarmsObject):
 class AgentCompletionResponse(SwarmsObject):
     """Response from an agent completion request"""
 
-    id: str
-    success: bool
-    name: str
+    id: Optional[str] = None
+    success: Optional[bool] = None
+    name: Optional[str] = None
     description: Optional[str] = None
-    temperature: float
-    outputs: Union[Dict[str, Any], List[Dict[str, Any]]]
-    usage: Usage
-    timestamp: str
+    temperature: Optional[float] = None
+    outputs: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None
+    usage: Optional[Usage] = None
+    timestamp: Optional[str] = None
 
     class Config:
         arbitrary_types_allowed = True
+
+
+class BatchAgentCompletionResponse(SwarmsObject):
+    """Response from a batch agent completion request"""
+
+    batch_id: Optional[str] = None
+    total_requests: Optional[int] = None
+    execution_time: Optional[float] = None
+    timestamp: Optional[str] = None
+    results: Optional[List[AgentCompletionResponse]] = None
 
 
 class SwarmCompletionResponse(SwarmsObject):
@@ -907,7 +917,7 @@ class AgentResource(BaseResource):
 
     def create_batch(
         self, completions: List[Union[Dict, AgentCompletion]]
-    ) -> List[AgentCompletionResponse]:
+    ) -> BatchAgentCompletionResponse:
         """
         Create multiple agent completions in batch.
 
@@ -954,7 +964,7 @@ class AgentResource(BaseResource):
         )
 
         # Parse responses
-        return [_parse_response(AgentCompletionResponse, item) for item in data]
+        return _parse_response(BatchAgentCompletionResponse, data)
 
     async def acreate(self, **kwargs) -> AgentCompletionResponse:
         """

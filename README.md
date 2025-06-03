@@ -34,45 +34,100 @@ pip install swarms-client
 
 ## API Resources
 
-### Agent Resource
+### Individual Agent Completions
 
 ```python
 from swarms_client import SwarmsClient
+from swarms_client.client import AgentSpec
 
-client = SwarmsClient(api_key="your-api-key")
+client = SwarmsClient()
 
-# Create a single agent completion
 response = client.agent.create(
-    agent_config={
-        "agent_name": "researcher",
-        "model_name": "gpt-4",
-        "role": "researcher"
-    },
-    task="Research quantum computing"
+    agent_config=AgentSpec(
+        agent_name="financial_analyst",
+        model_name="gpt-4o-mini",
+        temperature=0.5,  # Lower temperature for more precise financial analysis
+        description="A specialized financial analyst who can analyze market trends, financial data, and provide investment insights",
+        system_prompt="""You are an expert financial analyst with deep knowledge of:
+- Financial markets and trading
+- Company financial analysis and valuation
+- Economic indicators and their impact
+- Investment strategies and portfolio management
+- Risk assessment and management
+
+Provide detailed, data-driven analysis and insights while maintaining professional financial accuracy.""",
+    ).model_dump(),
+    task="Please analyze the recent performance of major market indices and provide key insights.",
 )
 
-# Create multiple agent completions in batch
-responses = client.agent.create_batch([
-    {
-        "agent_config": {
-            "agent_name": "researcher",
-            "model_name": "gpt-4"
-        },
-        "task": "Research topic 1"
-    },
-    {
-        "agent_config": {
-            "agent_name": "writer",
-            "model_name": "gpt-4"
-        },
-        "task": "Write about topic 2"
-    }
-])
+print(response.model_dump_json(indent=4))
 
-# Async versions
-async_response = await client.agent.acreate(...)
-async_responses = await client.agent.acreate_batch(...)
+)
+
 ```
+
+## Agent Batch Endpoint
+
+This is the batch endpoint example, where you can create custom configurations of agents and they'll execute autonomously. 
+
+```python
+from swarms_client.client import SwarmsClient
+import os
+import sys
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Get API key with error handling
+api_key = os.getenv("SWARMS_API_KEY")
+
+# Initialize the client with explicit API key
+client = SwarmsClient(api_key=api_key)
+
+
+def run_agent_batch_example():
+    """Example of running batch agent completions"""
+    try:
+        # Define multiple agent completion requests
+        agent_completions = [
+            {
+                "agent_config": {
+                    "agent_name": "Market Researcher",
+                    "description": "Analyzes market trends and opportunities",
+                    "model_name": "gpt-4o-mini",
+                    "temperature": 0.7,
+                },
+                "task": "Analyze the current market trends in AI and ML",
+            },
+            {
+                "agent_config": {
+                    "agent_name": "Technical Writer",
+                    "description": "Creates technical documentation and reports",
+                    "model_name": "gpt-4o",
+                    "temperature": 0.4,
+                },
+                "task": "Write a technical overview of transformer architecture",
+            },
+        ]
+
+        # Execute batch agent completions
+        responses = client.agent.create_batch(completions=agent_completions)
+
+        # print(responses)
+        print(responses.model_dump_json(indent=4))
+        print(type(responses))
+
+    except Exception as e:
+        print(f"Error during batch processing: {str(e)}")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    print("Running Agent Batch Example...")
+    run_agent_batch_example()
+```
+
 
 ### Swarm Resource
 
