@@ -1,4 +1,4 @@
-# Swarms
+# SwarmsClient
 
 Methods:
 

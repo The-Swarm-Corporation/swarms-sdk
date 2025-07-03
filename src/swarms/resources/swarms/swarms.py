@@ -62,7 +62,6 @@ class SwarmsResource(SyncAPIResource):
     def check_available(
         self,
         *,
-        x_api_key: str,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
         # The extra values given here take precedence over values defined on the client or passed to this method.
         extra_headers: Headers | None = None,
@@ -70,19 +69,7 @@ class SwarmsResource(SyncAPIResource):
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
     ) -> SwarmCheckAvailableResponse:
-        """
-        Check the available swarm types.
-
-        Args:
-          extra_headers: Send extra headers
-
-          extra_query: Add additional query parameters to the request
-
-          extra_body: Add additional JSON properties to the request
-
-          timeout: Override the client-level default timeout for this request, in seconds
-        """
-        extra_headers = {"x-api-key": x_api_key, **(extra_headers or {})}
+        """Check the available swarm types."""
         return self._get(
             "/v1/swarms/available",
             options=make_request_options(
@@ -94,7 +81,6 @@ class SwarmsResource(SyncAPIResource):
     def get_logs(
         self,
         *,
-        x_api_key: str,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
         # The extra values given here take precedence over values defined on the client or passed to this method.
         extra_headers: Headers | None = None,
@@ -105,17 +91,7 @@ class SwarmsResource(SyncAPIResource):
         """
         Get all API request logs for the user associated with the provided API key,
         excluding any logs that contain a client_ip field in their data.
-
-        Args:
-          extra_headers: Send extra headers
-
-          extra_query: Add additional query parameters to the request
-
-          extra_body: Add additional JSON properties to the request
-
-          timeout: Override the client-level default timeout for this request, in seconds
         """
-        extra_headers = {"x-api-key": x_api_key, **(extra_headers or {})}
         return self._get(
             "/v1/swarm/logs",
             options=make_request_options(
@@ -127,7 +103,6 @@ class SwarmsResource(SyncAPIResource):
     def run(
         self,
         *,
-        x_api_key: str,
         agents: Optional[Iterable[AgentSpecParam]] | NotGiven = NOT_GIVEN,
         description: Optional[str] | NotGiven = NOT_GIVEN,
         img: Optional[str] | NotGiven = NOT_GIVEN,
@@ -217,7 +192,6 @@ class SwarmsResource(SyncAPIResource):
 
           timeout: Override the client-level default timeout for this request, in seconds
         """
-        extra_headers = {"x-api-key": x_api_key, **(extra_headers or {})}
         return self._post(
             "/v1/swarm/completions",
             body=maybe_transform(
@@ -273,7 +247,6 @@ class AsyncSwarmsResource(AsyncAPIResource):
     async def check_available(
         self,
         *,
-        x_api_key: str,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
         # The extra values given here take precedence over values defined on the client or passed to this method.
         extra_headers: Headers | None = None,
@@ -281,19 +254,7 @@ class AsyncSwarmsResource(AsyncAPIResource):
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
     ) -> SwarmCheckAvailableResponse:
-        """
-        Check the available swarm types.
-
-        Args:
-          extra_headers: Send extra headers
-
-          extra_query: Add additional query parameters to the request
-
-          extra_body: Add additional JSON properties to the request
-
-          timeout: Override the client-level default timeout for this request, in seconds
-        """
-        extra_headers = {"x-api-key": x_api_key, **(extra_headers or {})}
+        """Check the available swarm types."""
         return await self._get(
             "/v1/swarms/available",
             options=make_request_options(
@@ -305,7 +266,6 @@ class AsyncSwarmsResource(AsyncAPIResource):
     async def get_logs(
         self,
         *,
-        x_api_key: str,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
         # The extra values given here take precedence over values defined on the client or passed to this method.
         extra_headers: Headers | None = None,
@@ -316,17 +276,7 @@ class AsyncSwarmsResource(AsyncAPIResource):
         """
         Get all API request logs for the user associated with the provided API key,
         excluding any logs that contain a client_ip field in their data.
-
-        Args:
-          extra_headers: Send extra headers
-
-          extra_query: Add additional query parameters to the request
-
-          extra_body: Add additional JSON properties to the request
-
-          timeout: Override the client-level default timeout for this request, in seconds
         """
-        extra_headers = {"x-api-key": x_api_key, **(extra_headers or {})}
         return await self._get(
             "/v1/swarm/logs",
             options=make_request_options(
@@ -338,7 +288,6 @@ class AsyncSwarmsResource(AsyncAPIResource):
     async def run(
         self,
         *,
-        x_api_key: str,
         agents: Optional[Iterable[AgentSpecParam]] | NotGiven = NOT_GIVEN,
         description: Optional[str] | NotGiven = NOT_GIVEN,
         img: Optional[str] | NotGiven = NOT_GIVEN,
@@ -428,7 +377,6 @@ class AsyncSwarmsResource(AsyncAPIResource):
 
           timeout: Override the client-level default timeout for this request, in seconds
         """
-        extra_headers = {"x-api-key": x_api_key, **(extra_headers or {})}
         return await self._post(
             "/v1/swarm/completions",
             body=await async_maybe_transform(

@@ -42,16 +42,25 @@ from ._base_client import (
 from .resources.agent import agent
 from .resources.swarms import swarms
 
-__all__ = ["Timeout", "Transport", "ProxiesTypes", "RequestOptions", "Swarms", "AsyncSwarms", "Client", "AsyncClient"]
+__all__ = [
+    "Timeout",
+    "Transport",
+    "ProxiesTypes",
+    "RequestOptions",
+    "SwarmsClient",
+    "AsyncSwarmsClient",
+    "Client",
+    "AsyncClient",
+]
 
 
-class Swarms(SyncAPIClient):
+class SwarmsClient(SyncAPIClient):
     health: health.HealthResource
     agent: agent.AgentResource
     models: models.ModelsResource
     swarms: swarms.SwarmsResource
-    with_raw_response: SwarmsWithRawResponse
-    with_streaming_response: SwarmsWithStreamedResponse
+    with_raw_response: SwarmsClientWithRawResponse
+    with_streaming_response: SwarmsClientWithStreamedResponse
 
     # client options
     api_key: str | None
@@ -79,7 +88,7 @@ class Swarms(SyncAPIClient):
         # part of our public interface in the future.
         _strict_response_validation: bool = False,
     ) -> None:
-        """Construct a new synchronous Swarms client instance.
+        """Construct a new synchronous SwarmsClient client instance.
 
         This automatically infers the `api_key` argument from the `SWARMS_API_KEY` environment variable if it is not provided.
         """
@@ -88,9 +97,9 @@ class Swarms(SyncAPIClient):
         self.api_key = api_key
 
         if base_url is None:
-            base_url = os.environ.get("SWARMS_BASE_URL")
+            base_url = os.environ.get("SWARMS_CLIENT_BASE_URL")
         if base_url is None:
-            base_url = f"https://api.example.com"
+            base_url = f"https://swarms-api-285321057562.us-east1.run.app"
 
         super().__init__(
             version=__version__,
@@ -107,8 +116,8 @@ class Swarms(SyncAPIClient):
         self.agent = agent.AgentResource(self)
         self.models = models.ModelsResource(self)
         self.swarms = swarms.SwarmsResource(self)
-        self.with_raw_response = SwarmsWithRawResponse(self)
-        self.with_streaming_response = SwarmsWithStreamedResponse(self)
+        self.with_raw_response = SwarmsClientWithRawResponse(self)
+        self.with_streaming_response = SwarmsClientWithStreamedResponse(self)
 
     @property
     @override
@@ -121,7 +130,7 @@ class Swarms(SyncAPIClient):
         api_key = self.api_key
         if api_key is None:
             return {}
-        return {"Authorization": f"Bearer {api_key}"}
+        return {"x-api-key": api_key}
 
     @property
     @override
@@ -134,13 +143,13 @@ class Swarms(SyncAPIClient):
 
     @override
     def _validate_headers(self, headers: Headers, custom_headers: Headers) -> None:
-        if self.api_key and headers.get("Authorization"):
+        if self.api_key and headers.get("x-api-key"):
             return
-        if isinstance(custom_headers.get("Authorization"), Omit):
+        if isinstance(custom_headers.get("x-api-key"), Omit):
             return
 
         raise TypeError(
-            '"Could not resolve authentication method. Expected the api_key to be set. Or for the `Authorization` headers to be explicitly omitted"'
+            '"Could not resolve authentication method. Expected the api_key to be set. Or for the `x-api-key` headers to be explicitly omitted"'
         )
 
     def copy(
@@ -247,13 +256,13 @@ class Swarms(SyncAPIClient):
         return APIStatusError(err_msg, response=response, body=body)
 
 
-class AsyncSwarms(AsyncAPIClient):
+class AsyncSwarmsClient(AsyncAPIClient):
     health: health.AsyncHealthResource
     agent: agent.AsyncAgentResource
     models: models.AsyncModelsResource
     swarms: swarms.AsyncSwarmsResource
-    with_raw_response: AsyncSwarmsWithRawResponse
-    with_streaming_response: AsyncSwarmsWithStreamedResponse
+    with_raw_response: AsyncSwarmsClientWithRawResponse
+    with_streaming_response: AsyncSwarmsClientWithStreamedResponse
 
     # client options
     api_key: str | None
@@ -281,7 +290,7 @@ class AsyncSwarms(AsyncAPIClient):
         # part of our public interface in the future.
         _strict_response_validation: bool = False,
     ) -> None:
-        """Construct a new async AsyncSwarms client instance.
+        """Construct a new async AsyncSwarmsClient client instance.
 
         This automatically infers the `api_key` argument from the `SWARMS_API_KEY` environment variable if it is not provided.
         """
@@ -290,9 +299,9 @@ class AsyncSwarms(AsyncAPIClient):
         self.api_key = api_key
 
         if base_url is None:
-            base_url = os.environ.get("SWARMS_BASE_URL")
+            base_url = os.environ.get("SWARMS_CLIENT_BASE_URL")
         if base_url is None:
-            base_url = f"https://api.example.com"
+            base_url = f"https://swarms-api-285321057562.us-east1.run.app"
 
         super().__init__(
             version=__version__,
@@ -309,8 +318,8 @@ class AsyncSwarms(AsyncAPIClient):
         self.agent = agent.AsyncAgentResource(self)
         self.models = models.AsyncModelsResource(self)
         self.swarms = swarms.AsyncSwarmsResource(self)
-        self.with_raw_response = AsyncSwarmsWithRawResponse(self)
-        self.with_streaming_response = AsyncSwarmsWithStreamedResponse(self)
+        self.with_raw_response = AsyncSwarmsClientWithRawResponse(self)
+        self.with_streaming_response = AsyncSwarmsClientWithStreamedResponse(self)
 
     @property
     @override
@@ -323,7 +332,7 @@ class AsyncSwarms(AsyncAPIClient):
         api_key = self.api_key
         if api_key is None:
             return {}
-        return {"Authorization": f"Bearer {api_key}"}
+        return {"x-api-key": api_key}
 
     @property
     @override
@@ -336,13 +345,13 @@ class AsyncSwarms(AsyncAPIClient):
 
     @override
     def _validate_headers(self, headers: Headers, custom_headers: Headers) -> None:
-        if self.api_key and headers.get("Authorization"):
+        if self.api_key and headers.get("x-api-key"):
             return
-        if isinstance(custom_headers.get("Authorization"), Omit):
+        if isinstance(custom_headers.get("x-api-key"), Omit):
             return
 
         raise TypeError(
-            '"Could not resolve authentication method. Expected the api_key to be set. Or for the `Authorization` headers to be explicitly omitted"'
+            '"Could not resolve authentication method. Expected the api_key to be set. Or for the `x-api-key` headers to be explicitly omitted"'
         )
 
     def copy(
@@ -449,8 +458,8 @@ class AsyncSwarms(AsyncAPIClient):
         return APIStatusError(err_msg, response=response, body=body)
 
 
-class SwarmsWithRawResponse:
-    def __init__(self, client: Swarms) -> None:
+class SwarmsClientWithRawResponse:
+    def __init__(self, client: SwarmsClient) -> None:
         self.health = health.HealthResourceWithRawResponse(client.health)
         self.agent = agent.AgentResourceWithRawResponse(client.agent)
         self.models = models.ModelsResourceWithRawResponse(client.models)
@@ -461,8 +470,8 @@ class SwarmsWithRawResponse:
         )
 
 
-class AsyncSwarmsWithRawResponse:
-    def __init__(self, client: AsyncSwarms) -> None:
+class AsyncSwarmsClientWithRawResponse:
+    def __init__(self, client: AsyncSwarmsClient) -> None:
         self.health = health.AsyncHealthResourceWithRawResponse(client.health)
         self.agent = agent.AsyncAgentResourceWithRawResponse(client.agent)
         self.models = models.AsyncModelsResourceWithRawResponse(client.models)
@@ -473,8 +482,8 @@ class AsyncSwarmsWithRawResponse:
         )
 
 
-class SwarmsWithStreamedResponse:
-    def __init__(self, client: Swarms) -> None:
+class SwarmsClientWithStreamedResponse:
+    def __init__(self, client: SwarmsClient) -> None:
         self.health = health.HealthResourceWithStreamingResponse(client.health)
         self.agent = agent.AgentResourceWithStreamingResponse(client.agent)
         self.models = models.ModelsResourceWithStreamingResponse(client.models)
@@ -485,8 +494,8 @@ class SwarmsWithStreamedResponse:
         )
 
 
-class AsyncSwarmsWithStreamedResponse:
-    def __init__(self, client: AsyncSwarms) -> None:
+class AsyncSwarmsClientWithStreamedResponse:
+    def __init__(self, client: AsyncSwarmsClient) -> None:
         self.health = health.AsyncHealthResourceWithStreamingResponse(client.health)
         self.agent = agent.AsyncAgentResourceWithStreamingResponse(client.agent)
         self.models = models.AsyncModelsResourceWithStreamingResponse(client.models)
@@ -497,6 +506,6 @@ class AsyncSwarmsWithStreamedResponse:
         )
 
 
-Client = Swarms
+Client = SwarmsClient
 
-AsyncClient = AsyncSwarms
+AsyncClient = AsyncSwarmsClient

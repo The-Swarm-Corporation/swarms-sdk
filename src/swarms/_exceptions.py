@@ -18,11 +18,11 @@ __all__ = [
 ]
 
 
-class SwarmsError(Exception):
+class SwarmsClientError(Exception):
     pass
 
 
-class APIError(SwarmsError):
+class APIError(SwarmsClientError):
     message: str
     request: httpx.Request
 
