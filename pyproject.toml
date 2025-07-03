@@ -1,5 +1,5 @@
 [project]
-name = "swarms"
+name = "swarms-client"
 version = "0.1.7"
 description = "The official Python library for the swarms API"
 dynamic = ["readme"]

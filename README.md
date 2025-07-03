@@ -1,6 +1,6 @@
 # Swarms Python API library
 
-[![PyPI version](<https://img.shields.io/pypi/v/swarms.svg?label=pypi%20(stable)>)](https://pypi.org/project/swarms/)
+[![PyPI version](<https://img.shields.io/pypi/v/swarms-client.svg?label=pypi%20(stable)>)](https://pypi.org/project/swarms-client/)
 
 The Swarms Python library provides convenient access to the Swarms REST API from any Python 3.8+
 application. The library includes type definitions for all request params and response fields,
@@ -15,12 +15,9 @@ The full API of this library can be found in [api.md](api.md).
 ## Installation
 
 ```sh
-# install from the production repo
-pip install git+ssh://git@github.com/The-Swarm-Corporation/swarms-sdk.git
+# install from PyPI
+pip install swarms-client
 ```
-
-> [!NOTE]
-> Once this package is [published to PyPI](https://www.stainless.com/docs/guides/publish), this will become: `pip install swarms`
 
 ## Usage
 
@@ -72,8 +69,8 @@ By default, the async client uses `httpx` for HTTP requests. However, for improv
 You can enable this by installing `aiohttp`:
 
 ```sh
-# install from the production repo
-pip install 'swarms[aiohttp] @ git+ssh://git@github.com/The-Swarm-Corporation/swarms-sdk.git'
+# install from PyPI
+pip install swarms-client[aiohttp]
 ```
 
 Then you can enable it by instantiating the client with `http_client=DefaultAioHttpClient()`:
