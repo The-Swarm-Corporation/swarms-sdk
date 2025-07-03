@@ -46,7 +46,7 @@ class SwarmsResource(SyncAPIResource):
         This property can be used as a prefix for any HTTP method call to return
         the raw response object instead of the parsed content.
 
-        For more information, see https://www.github.com/stainless-sdks/swarms-python#accessing-raw-response-data-eg-headers
+        For more information, see https://www.github.com/The-Swarm-Corporation/swarms-sdk#accessing-raw-response-data-eg-headers
         """
         return SwarmsResourceWithRawResponse(self)
 
@@ -55,7 +55,7 @@ class SwarmsResource(SyncAPIResource):
         """
         An alternative to `.with_raw_response` that doesn't eagerly read the response body.
 
-        For more information, see https://www.github.com/stainless-sdks/swarms-python#with_streaming_response
+        For more information, see https://www.github.com/The-Swarm-Corporation/swarms-sdk#with_streaming_response
         """
         return SwarmsResourceWithStreamingResponse(self)
 
@@ -257,7 +257,7 @@ class AsyncSwarmsResource(AsyncAPIResource):
         This property can be used as a prefix for any HTTP method call to return
         the raw response object instead of the parsed content.
 
-        For more information, see https://www.github.com/stainless-sdks/swarms-python#accessing-raw-response-data-eg-headers
+        For more information, see https://www.github.com/The-Swarm-Corporation/swarms-sdk#accessing-raw-response-data-eg-headers
         """
         return AsyncSwarmsResourceWithRawResponse(self)
 
@@ -266,7 +266,7 @@ class AsyncSwarmsResource(AsyncAPIResource):
         """
         An alternative to `.with_raw_response` that doesn't eagerly read the response body.
 
-        For more information, see https://www.github.com/stainless-sdks/swarms-python#with_streaming_response
+        For more information, see https://www.github.com/The-Swarm-Corporation/swarms-sdk#with_streaming_response
         """
         return AsyncSwarmsResourceWithStreamingResponse(self)
 
