@@ -25,7 +25,7 @@ The full API of this library can be found in [api.md](api.md).
 
 ```python
 import os
-from swarms import SwarmsClient
+from swarms_client import SwarmsClient
 
 client = SwarmsClient(
     api_key=os.environ.get("SWARMS_API_KEY"),  # This is the default and can be omitted
@@ -46,7 +46,7 @@ Simply import `AsyncSwarmsClient` instead of `SwarmsClient` and use `await` with
 ```python
 import os
 import asyncio
-from swarms import AsyncSwarmsClient
+from swarms_client import AsyncSwarmsClient
 
 client = AsyncSwarmsClient(
     api_key=os.environ.get("SWARMS_API_KEY"),  # This is the default and can be omitted
@@ -78,8 +78,8 @@ Then you can enable it by instantiating the client with `http_client=DefaultAioH
 ```python
 import os
 import asyncio
-from swarms import DefaultAioHttpClient
-from swarms import AsyncSwarmsClient
+from swarms_client import DefaultAioHttpClient
+from swarms_client import AsyncSwarmsClient
 
 
 async def main() -> None:
@@ -107,7 +107,7 @@ Typed requests and responses provide autocomplete and documentation within your 
 Nested parameters are dictionaries, typed using `TypedDict`, for example:
 
 ```python
-from swarms import SwarmsClient
+from swarms_client import SwarmsClient
 
 client = SwarmsClient()
 
@@ -119,27 +119,27 @@ print(response.agent_config)
 
 ## Handling errors
 
-When the library is unable to connect to the API (for example, due to network connection problems or a timeout), a subclass of `swarms.APIConnectionError` is raised.
+When the library is unable to connect to the API (for example, due to network connection problems or a timeout), a subclass of `swarms_client.APIConnectionError` is raised.
 
 When the API returns a non-success status code (that is, 4xx or 5xx
-response), a subclass of `swarms.APIStatusError` is raised, containing `status_code` and `response` properties.
+response), a subclass of `swarms_client.APIStatusError` is raised, containing `status_code` and `response` properties.
 
-All errors inherit from `swarms.APIError`.
+All errors inherit from `swarms_client.APIError`.
 
 ```python
-import swarms
-from swarms import SwarmsClient
+import swarms_client
+from swarms_client import SwarmsClient
 
 client = SwarmsClient()
 
 try:
     client.get_root()
-except swarms.APIConnectionError as e:
+except swarms_client.APIConnectionError as e:
     print("The server could not be reached")
     print(e.__cause__)  # an underlying Exception, likely raised within httpx.
-except swarms.RateLimitError as e:
+except swarms_client.RateLimitError as e:
     print("A 429 status code was received; we should back off a bit.")
-except swarms.APIStatusError as e:
+except swarms_client.APIStatusError as e:
     print("Another non-200-range status code was received")
     print(e.status_code)
     print(e.response)
@@ -167,7 +167,7 @@ Connection errors (for example, due to a network connectivity problem), 408 Requ
 You can use the `max_retries` option to configure or disable retry settings:
 
 ```python
-from swarms import SwarmsClient
+from swarms_client import SwarmsClient
 
 # Configure the default for all requests:
 client = SwarmsClient(
@@ -185,7 +185,7 @@ By default requests time out after 1 minute. You can configure this with a `time
 which accepts a float or an [`httpx.Timeout`](https://www.python-httpx.org/advanced/timeouts/#fine-tuning-the-configuration) object:
 
 ```python
-from swarms import SwarmsClient
+from swarms_client import SwarmsClient
 
 # Configure the default for all requests:
 client = SwarmsClient(
@@ -237,7 +237,7 @@ if response.my_field is None:
 The "raw" Response object can be accessed by prefixing `.with_raw_response.` to any HTTP method call, e.g.,
 
 ```py
-from swarms import SwarmsClient
+from swarms_client import SwarmsClient
 
 client = SwarmsClient()
 response = client.with_raw_response.get_root()
@@ -247,9 +247,9 @@ client = response.parse()  # get the object that `get_root()` would have returne
 print(client)
 ```
 
-These methods return an [`APIResponse`](https://github.com/The-Swarm-Corporation/swarms-sdk/tree/main/src/swarms/_response.py) object.
+These methods return an [`APIResponse`](https://github.com/The-Swarm-Corporation/swarms-sdk/tree/main/src/swarms_client/_response.py) object.
 
-The async client returns an [`AsyncAPIResponse`](https://github.com/The-Swarm-Corporation/swarms-sdk/tree/main/src/swarms/_response.py) with the same structure, the only difference being `await`able methods for reading the response content.
+The async client returns an [`AsyncAPIResponse`](https://github.com/The-Swarm-Corporation/swarms-sdk/tree/main/src/swarms_client/_response.py) with the same structure, the only difference being `await`able methods for reading the response content.
 
 #### `.with_streaming_response`
 
@@ -311,7 +311,7 @@ You can directly override the [httpx client](https://www.python-httpx.org/api/#c
 
 ```python
 import httpx
-from swarms import SwarmsClient, DefaultHttpxClient
+from swarms_client import SwarmsClient, DefaultHttpxClient
 
 client = SwarmsClient(
     # Or use the `SWARMS_CLIENT_BASE_URL` env var
@@ -334,7 +334,7 @@ client.with_options(http_client=DefaultHttpxClient(...))
 By default the library closes underlying HTTP connections whenever the client is [garbage collected](https://docs.python.org/3/reference/datamodel.html#object.__del__). You can manually close the client using the `.close()` method if desired, or with a context manager that closes when exiting.
 
 ```py
-from swarms import SwarmsClient
+from swarms_client import SwarmsClient
 
 with SwarmsClient() as client:
   # make requests here
@@ -362,8 +362,8 @@ If you've upgraded to the latest version but aren't seeing any new features you 
 You can determine the version that is being used at runtime with:
 
 ```py
-import swarms
-print(swarms.__version__)
+import swarms_client
+print(swarms_client.__version__)
 ```
 
 ## Requirements

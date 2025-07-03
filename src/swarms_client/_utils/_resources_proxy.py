@@ -7,17 +7,17 @@ from ._proxy import LazyProxy
 
 
 class ResourcesProxy(LazyProxy[Any]):
-    """A proxy for the `swarms.resources` module.
+    """A proxy for the `swarms_client.resources` module.
 
-    This is used so that we can lazily import `swarms.resources` only when
-    needed *and* so that users can just import `swarms` and reference `swarms.resources`
+    This is used so that we can lazily import `swarms_client.resources` only when
+    needed *and* so that users can just import `swarms_client` and reference `swarms_client.resources`
     """
 
     @override
     def __load__(self) -> Any:
         import importlib
 
-        mod = importlib.import_module("swarms.resources")
+        mod = importlib.import_module("swarms_client.resources")
         return mod
 
 

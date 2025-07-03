@@ -5,8 +5,8 @@ from typing import Iterator, AsyncIterator
 import httpx
 import pytest
 
-from swarms import SwarmsClient, AsyncSwarmsClient
-from swarms._streaming import Stream, AsyncStream, ServerSentEvent
+from swarms_client import SwarmsClient, AsyncSwarmsClient
+from swarms_client._streaming import Stream, AsyncStream, ServerSentEvent
 
 
 @pytest.mark.asyncio
