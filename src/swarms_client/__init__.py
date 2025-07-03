@@ -36,7 +36,11 @@ from ._exceptions import (
     UnprocessableEntityError,
     APIResponseValidationError,
 )
-from ._base_client import DefaultHttpxClient, DefaultAioHttpClient, DefaultAsyncHttpxClient
+from ._base_client import (
+    DefaultHttpxClient,
+    DefaultAioHttpClient,
+    DefaultAsyncHttpxClient,
+)
 from ._utils._logs import setup_logging as _setup_logging
 
 __all__ = [

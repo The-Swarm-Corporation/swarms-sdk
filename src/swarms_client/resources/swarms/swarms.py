@@ -73,7 +73,10 @@ class SwarmsResource(SyncAPIResource):
         return self._get(
             "/v1/swarms/available",
             options=make_request_options(
-                extra_headers=extra_headers, extra_query=extra_query, extra_body=extra_body, timeout=timeout
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
             ),
             cast_to=SwarmCheckAvailableResponse,
         )
@@ -95,7 +98,10 @@ class SwarmsResource(SyncAPIResource):
         return self._get(
             "/v1/swarm/logs",
             options=make_request_options(
-                extra_headers=extra_headers, extra_query=extra_query, extra_body=extra_body, timeout=timeout
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
             ),
             cast_to=SwarmGetLogsResponse,
         )
@@ -107,33 +113,37 @@ class SwarmsResource(SyncAPIResource):
         description: Optional[str] | NotGiven = NOT_GIVEN,
         img: Optional[str] | NotGiven = NOT_GIVEN,
         max_loops: Optional[int] | NotGiven = NOT_GIVEN,
-        messages: Union[Iterable[Dict[str, object]], Dict[str, object], None] | NotGiven = NOT_GIVEN,
+        messages: (
+            Union[Iterable[Dict[str, object]], Dict[str, object], None] | NotGiven
+        ) = NOT_GIVEN,
         name: Optional[str] | NotGiven = NOT_GIVEN,
         rearrange_flow: Optional[str] | NotGiven = NOT_GIVEN,
         return_history: Optional[bool] | NotGiven = NOT_GIVEN,
         rules: Optional[str] | NotGiven = NOT_GIVEN,
         service_tier: Optional[str] | NotGiven = NOT_GIVEN,
         stream: Optional[bool] | NotGiven = NOT_GIVEN,
-        swarm_type: Optional[
-            Literal[
-                "AgentRearrange",
-                "MixtureOfAgents",
-                "SpreadSheetSwarm",
-                "SequentialWorkflow",
-                "ConcurrentWorkflow",
-                "GroupChat",
-                "MultiAgentRouter",
-                "AutoSwarmBuilder",
-                "HiearchicalSwarm",
-                "auto",
-                "MajorityVoting",
-                "MALT",
-                "DeepResearchSwarm",
-                "CouncilAsAJudge",
-                "InteractiveGroupChat",
+        swarm_type: (
+            Optional[
+                Literal[
+                    "AgentRearrange",
+                    "MixtureOfAgents",
+                    "SpreadSheetSwarm",
+                    "SequentialWorkflow",
+                    "ConcurrentWorkflow",
+                    "GroupChat",
+                    "MultiAgentRouter",
+                    "AutoSwarmBuilder",
+                    "HiearchicalSwarm",
+                    "auto",
+                    "MajorityVoting",
+                    "MALT",
+                    "DeepResearchSwarm",
+                    "CouncilAsAJudge",
+                    "InteractiveGroupChat",
+                ]
             ]
-        ]
-        | NotGiven = NOT_GIVEN,
+            | NotGiven
+        ) = NOT_GIVEN,
         task: Optional[str] | NotGiven = NOT_GIVEN,
         tasks: Optional[List[str]] | NotGiven = NOT_GIVEN,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
@@ -214,7 +224,10 @@ class SwarmsResource(SyncAPIResource):
                 swarm_run_params.SwarmRunParams,
             ),
             options=make_request_options(
-                extra_headers=extra_headers, extra_query=extra_query, extra_body=extra_body, timeout=timeout
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
             ),
             cast_to=SwarmRunResponse,
         )
@@ -258,7 +271,10 @@ class AsyncSwarmsResource(AsyncAPIResource):
         return await self._get(
             "/v1/swarms/available",
             options=make_request_options(
-                extra_headers=extra_headers, extra_query=extra_query, extra_body=extra_body, timeout=timeout
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
             ),
             cast_to=SwarmCheckAvailableResponse,
         )
@@ -280,7 +296,10 @@ class AsyncSwarmsResource(AsyncAPIResource):
         return await self._get(
             "/v1/swarm/logs",
             options=make_request_options(
-                extra_headers=extra_headers, extra_query=extra_query, extra_body=extra_body, timeout=timeout
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
             ),
             cast_to=SwarmGetLogsResponse,
         )
@@ -292,33 +311,37 @@ class AsyncSwarmsResource(AsyncAPIResource):
         description: Optional[str] | NotGiven = NOT_GIVEN,
         img: Optional[str] | NotGiven = NOT_GIVEN,
         max_loops: Optional[int] | NotGiven = NOT_GIVEN,
-        messages: Union[Iterable[Dict[str, object]], Dict[str, object], None] | NotGiven = NOT_GIVEN,
+        messages: (
+            Union[Iterable[Dict[str, object]], Dict[str, object], None] | NotGiven
+        ) = NOT_GIVEN,
         name: Optional[str] | NotGiven = NOT_GIVEN,
         rearrange_flow: Optional[str] | NotGiven = NOT_GIVEN,
         return_history: Optional[bool] | NotGiven = NOT_GIVEN,
         rules: Optional[str] | NotGiven = NOT_GIVEN,
         service_tier: Optional[str] | NotGiven = NOT_GIVEN,
         stream: Optional[bool] | NotGiven = NOT_GIVEN,
-        swarm_type: Optional[
-            Literal[
-                "AgentRearrange",
-                "MixtureOfAgents",
-                "SpreadSheetSwarm",
-                "SequentialWorkflow",
-                "ConcurrentWorkflow",
-                "GroupChat",
-                "MultiAgentRouter",
-                "AutoSwarmBuilder",
-                "HiearchicalSwarm",
-                "auto",
-                "MajorityVoting",
-                "MALT",
-                "DeepResearchSwarm",
-                "CouncilAsAJudge",
-                "InteractiveGroupChat",
+        swarm_type: (
+            Optional[
+                Literal[
+                    "AgentRearrange",
+                    "MixtureOfAgents",
+                    "SpreadSheetSwarm",
+                    "SequentialWorkflow",
+                    "ConcurrentWorkflow",
+                    "GroupChat",
+                    "MultiAgentRouter",
+                    "AutoSwarmBuilder",
+                    "HiearchicalSwarm",
+                    "auto",
+                    "MajorityVoting",
+                    "MALT",
+                    "DeepResearchSwarm",
+                    "CouncilAsAJudge",
+                    "InteractiveGroupChat",
+                ]
             ]
-        ]
-        | NotGiven = NOT_GIVEN,
+            | NotGiven
+        ) = NOT_GIVEN,
         task: Optional[str] | NotGiven = NOT_GIVEN,
         tasks: Optional[List[str]] | NotGiven = NOT_GIVEN,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
@@ -399,7 +422,10 @@ class AsyncSwarmsResource(AsyncAPIResource):
                 swarm_run_params.SwarmRunParams,
             ),
             options=make_request_options(
-                extra_headers=extra_headers, extra_query=extra_query, extra_body=extra_body, timeout=timeout
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
             ),
             cast_to=SwarmRunResponse,
         )

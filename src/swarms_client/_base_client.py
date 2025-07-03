@@ -269,7 +269,9 @@ class BaseSyncPage(BasePage[_T], Generic[_T]):
             )
 
         options = self._info_to_options(info)
-        return self._client._request_api_list(self._model, page=self.__class__, options=options)
+        return self._client._request_api_list(
+            self._model, page=self.__class__, options=options
+        )
 
 
 class AsyncPaginator(Generic[_T, AsyncPageT]):
@@ -349,7 +351,9 @@ class BaseAsyncPage(BasePage[_T], Generic[_T]):
             )
 
         options = self._info_to_options(info)
-        return await self._client._request_api_list(self._model, page=self.__class__, options=options)
+        return await self._client._request_api_list(
+            self._model, page=self.__class__, options=options
+        )
 
 
 _HttpxClientT = TypeVar("_HttpxClientT", bound=Union[httpx.Client, httpx.AsyncClient])
@@ -428,7 +432,9 @@ class BaseClient(Generic[_HttpxClientT, _DefaultStreamT]):
     ) -> _exceptions.APIStatusError:
         raise NotImplementedError()
 
-    def _build_headers(self, options: FinalRequestOptions, *, retries_taken: int = 0) -> httpx.Headers:
+    def _build_headers(
+        self, options: FinalRequestOptions, *, retries_taken: int = 0
+    ) -> httpx.Headers:
         custom_headers = options.headers or {}
         headers_dict = _merge_mappings(self.default_headers, custom_headers)
         self._validate_headers(headers_dict, custom_headers)
@@ -437,7 +443,11 @@ class BaseClient(Generic[_HttpxClientT, _DefaultStreamT]):
         headers = httpx.Headers(headers_dict)
 
         idempotency_header = self._idempotency_header
-        if idempotency_header and options.idempotency_key and idempotency_header not in headers:
+        if (
+            idempotency_header
+            and options.idempotency_key
+            and idempotency_header not in headers
+        ):
             headers[idempotency_header] = options.idempotency_key
 
         # Don't set these headers if they were already set or removed by the caller. We check
@@ -446,7 +456,11 @@ class BaseClient(Generic[_HttpxClientT, _DefaultStreamT]):
         if "x-stainless-retry-count" not in lower_custom_headers:
             headers["x-stainless-retry-count"] = str(retries_taken)
         if "x-stainless-read-timeout" not in lower_custom_headers:
-            timeout = self.timeout if isinstance(options.timeout, NotGiven) else options.timeout
+            timeout = (
+                self.timeout
+                if isinstance(options.timeout, NotGiven)
+                else options.timeout
+            )
             if isinstance(timeout, Timeout):
                 timeout = timeout.read
             if timeout is not None:
@@ -488,7 +502,9 @@ class BaseClient(Generic[_HttpxClientT, _DefaultStreamT]):
             elif is_mapping(json_data):
                 json_data = _merge_mappings(json_data, options.extra_json)
             else:
-                raise RuntimeError(f"Unexpected JSON data type, {type(json_data)}, cannot merge with `extra_body`")
+                raise RuntimeError(
+                    f"Unexpected JSON data type, {type(json_data)}, cannot merge with `extra_body`"
+                )
 
         headers = self._build_headers(options, retries_taken=retries_taken)
         params = _merge_mappings(self.default_query, options.params)
@@ -532,20 +548,28 @@ class BaseClient(Generic[_HttpxClientT, _DefaultStreamT]):
         # TODO: report this error to httpx
         return self._client.build_request(  # pyright: ignore[reportUnknownMemberType]
             headers=headers,
-            timeout=self.timeout if isinstance(options.timeout, NotGiven) else options.timeout,
+            timeout=(
+                self.timeout
+                if isinstance(options.timeout, NotGiven)
+                else options.timeout
+            ),
             method=options.method,
             url=prepared_url,
             # the `Query` type that we use is incompatible with qs'
             # `Params` type as it needs to be typed as `Mapping[str, object]`
             # so that passing a `TypedDict` doesn't cause an error.
             # https://github.com/microsoft/pyright/issues/3526#event-6715453066
-            params=self.qs.stringify(cast(Mapping[str, Any], params)) if params else None,
+            params=(
+                self.qs.stringify(cast(Mapping[str, Any], params)) if params else None
+            ),
             json=json_data if is_given(json_data) else None,
             files=files,
             **kwargs,
         )
 
-    def _serialize_multipartform(self, data: Mapping[object, object]) -> dict[str, object]:
+    def _serialize_multipartform(
+        self, data: Mapping[object, object]
+    ) -> dict[str, object]:
         items = self.qs.stringify_items(
             # TODO: type ignore is required as stringify_items is well typed but we can't be
             # well typed without heavy validation.
@@ -575,7 +599,9 @@ class BaseClient(Generic[_HttpxClientT, _DefaultStreamT]):
 
         return serialized
 
-    def _maybe_override_cast_to(self, cast_to: type[ResponseT], options: FinalRequestOptions) -> type[ResponseT]:
+    def _maybe_override_cast_to(
+        self, cast_to: type[ResponseT], options: FinalRequestOptions
+    ) -> type[ResponseT]:
         if not is_given(options.headers):
             return cast_to
 
@@ -669,7 +695,9 @@ class BaseClient(Generic[_HttpxClientT, _DefaultStreamT]):
 
     @base_url.setter
     def base_url(self, url: URL | str) -> None:
-        self._base_url = self._enforce_trailing_slash(url if isinstance(url, URL) else URL(url))
+        self._base_url = self._enforce_trailing_slash(
+            url if isinstance(url, URL) else URL(url)
+        )
 
     def platform_headers(self) -> Dict[str, str]:
         # the actual implementation is in a separate `lru_cache` decorated
@@ -677,7 +705,9 @@ class BaseClient(Generic[_HttpxClientT, _DefaultStreamT]):
         # https://github.com/python/cpython/issues/88476
         return platform_headers(self._version, platform=self._platform)
 
-    def _parse_retry_after_header(self, response_headers: Optional[httpx.Headers] = None) -> float | None:
+    def _parse_retry_after_header(
+        self, response_headers: Optional[httpx.Headers] = None
+    ) -> float | None:
         """Returns a float of the number of seconds (not milliseconds) to wait after retrying, or None if unspecified.
 
         About the Retry-After header: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After
@@ -834,7 +864,9 @@ class SyncAPIClient(BaseClient[httpx.Client, Stream[Any]]):
             else:
                 timeout = DEFAULT_TIMEOUT
 
-        if http_client is not None and not isinstance(http_client, httpx.Client):  # pyright: ignore[reportUnnecessaryIsInstance]
+        if http_client is not None and not isinstance(
+            http_client, httpx.Client
+        ):  # pyright: ignore[reportUnnecessaryIsInstance]
             raise TypeError(
                 f"Invalid `http_client` argument; Expected an instance of `httpx.Client` but got {type(http_client)}"
             )
@@ -940,7 +972,10 @@ class SyncAPIClient(BaseClient[httpx.Client, Stream[Any]]):
         # options are mutated later & we then retry, the retries are
         # given the original options
         input_options = model_copy(options)
-        if input_options.idempotency_key is None and input_options.method.lower() != "get":
+        if (
+            input_options.idempotency_key is None
+            and input_options.method.lower() != "get"
+        ):
             # ensure the idempotency key is reused between requests
             input_options.idempotency_key = self._idempotency_key()
 
@@ -1046,7 +1081,12 @@ class SyncAPIClient(BaseClient[httpx.Client, Stream[Any]]):
         )
 
     def _sleep_for_retry(
-        self, *, retries_taken: int, max_retries: int, options: FinalRequestOptions, response: httpx.Response | None
+        self,
+        *,
+        retries_taken: int,
+        max_retries: int,
+        options: FinalRequestOptions,
+        response: httpx.Response | None,
     ) -> None:
         remaining_retries = max_retries - retries_taken
         if remaining_retries == 1:
@@ -1054,7 +1094,9 @@ class SyncAPIClient(BaseClient[httpx.Client, Stream[Any]]):
         else:
             log.debug("%i retries left", remaining_retries)
 
-        timeout = self._calculate_retry_timeout(remaining_retries, options, response.headers if response else None)
+        timeout = self._calculate_retry_timeout(
+            remaining_retries, options, response.headers if response else None
+        )
         log.info("Retrying request to %s in %f seconds", options.url, timeout)
 
         time.sleep(timeout)
@@ -1080,7 +1122,9 @@ class SyncAPIClient(BaseClient[httpx.Client, Stream[Any]]):
             and (not stream or bool(response.request.headers.get(RAW_RESPONSE_HEADER)))
         ):
             if not issubclass(origin, APIResponse):
-                raise TypeError(f"API Response types must subclass {APIResponse}; Received {origin}")
+                raise TypeError(
+                    f"API Response types must subclass {APIResponse}; Received {origin}"
+                )
 
             response_cls = cast("type[BaseAPIResponse[Any]]", cast_to)
             return cast(
@@ -1102,7 +1146,9 @@ class SyncAPIClient(BaseClient[httpx.Client, Stream[Any]]):
         api_response = APIResponse(
             raw=response,
             client=self,
-            cast_to=cast("type[ResponseT]", cast_to),  # pyright: ignore[reportUnnecessaryCast]
+            cast_to=cast(
+                "type[ResponseT]", cast_to
+            ),  # pyright: ignore[reportUnnecessaryCast]
             stream=stream,
             stream_cls=stream_cls,
             options=options,
@@ -1175,7 +1221,9 @@ class SyncAPIClient(BaseClient[httpx.Client, Stream[Any]]):
         opts = FinalRequestOptions.construct(method="get", url=path, **options)
         # cast is required because mypy complains about returning Any even though
         # it understands the type variables
-        return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+        return cast(
+            ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+        )
 
     @overload
     def post(
@@ -1227,9 +1275,15 @@ class SyncAPIClient(BaseClient[httpx.Client, Stream[Any]]):
         stream_cls: type[_StreamT] | None = None,
     ) -> ResponseT | _StreamT:
         opts = FinalRequestOptions.construct(
-            method="post", url=path, json_data=body, files=to_httpx_files(files), **options
+            method="post",
+            url=path,
+            json_data=body,
+            files=to_httpx_files(files),
+            **options,
         )
-        return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+        return cast(
+            ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+        )
 
     def patch(
         self,
@@ -1239,7 +1293,9 @@ class SyncAPIClient(BaseClient[httpx.Client, Stream[Any]]):
         body: Body | None = None,
         options: RequestOptions = {},
     ) -> ResponseT:
-        opts = FinalRequestOptions.construct(method="patch", url=path, json_data=body, **options)
+        opts = FinalRequestOptions.construct(
+            method="patch", url=path, json_data=body, **options
+        )
         return self.request(cast_to, opts)
 
     def put(
@@ -1252,7 +1308,11 @@ class SyncAPIClient(BaseClient[httpx.Client, Stream[Any]]):
         options: RequestOptions = {},
     ) -> ResponseT:
         opts = FinalRequestOptions.construct(
-            method="put", url=path, json_data=body, files=to_httpx_files(files), **options
+            method="put",
+            url=path,
+            json_data=body,
+            files=to_httpx_files(files),
+            **options,
         )
         return self.request(cast_to, opts)
 
@@ -1264,7 +1324,9 @@ class SyncAPIClient(BaseClient[httpx.Client, Stream[Any]]):
         body: Body | None = None,
         options: RequestOptions = {},
     ) -> ResponseT:
-        opts = FinalRequestOptions.construct(method="delete", url=path, json_data=body, **options)
+        opts = FinalRequestOptions.construct(
+            method="delete", url=path, json_data=body, **options
+        )
         return self.request(cast_to, opts)
 
     def get_api_list(
@@ -1277,7 +1339,9 @@ class SyncAPIClient(BaseClient[httpx.Client, Stream[Any]]):
         options: RequestOptions = {},
         method: str = "get",
     ) -> SyncPageT:
-        opts = FinalRequestOptions.construct(method=method, url=path, json_data=body, **options)
+        opts = FinalRequestOptions.construct(
+            method=method, url=path, json_data=body, **options
+        )
         return self._request_api_list(model, page, opts)
 
 
@@ -1289,22 +1353,11 @@ class _DefaultAsyncHttpxClient(httpx.AsyncClient):
         super().__init__(**kwargs)
 
 
-try:
-    import httpx_aiohttp
-except ImportError:
-
-    class _DefaultAioHttpClient(httpx.AsyncClient):
-        def __init__(self, **_kwargs: Any) -> None:
-            raise RuntimeError("To use the aiohttp client you must have installed the package with the `aiohttp` extra")
-else:
-
-    class _DefaultAioHttpClient(httpx_aiohttp.HttpxAiohttpClient):  # type: ignore
-        def __init__(self, **kwargs: Any) -> None:
-            kwargs.setdefault("timeout", DEFAULT_TIMEOUT)
-            kwargs.setdefault("limits", DEFAULT_CONNECTION_LIMITS)
-            kwargs.setdefault("follow_redirects", True)
-
-            super().__init__(**kwargs)
+class _DefaultAioHttpClient(httpx.AsyncClient):
+    def __init__(self, **_kwargs: Any) -> None:
+        raise RuntimeError(
+            "To use the aiohttp client you must have installed the package with the `aiohttp` extra"
+        )
 
 
 if TYPE_CHECKING:
@@ -1364,7 +1417,9 @@ class AsyncAPIClient(BaseClient[httpx.AsyncClient, AsyncStream[Any]]):
             else:
                 timeout = DEFAULT_TIMEOUT
 
-        if http_client is not None and not isinstance(http_client, httpx.AsyncClient):  # pyright: ignore[reportUnnecessaryIsInstance]
+        if http_client is not None and not isinstance(
+            http_client, httpx.AsyncClient
+        ):  # pyright: ignore[reportUnnecessaryIsInstance]
             raise TypeError(
                 f"Invalid `http_client` argument; Expected an instance of `httpx.AsyncClient` but got {type(http_client)}"
             )
@@ -1472,7 +1527,10 @@ class AsyncAPIClient(BaseClient[httpx.AsyncClient, AsyncStream[Any]]):
         # options are mutated later & we then retry, the retries are
         # given the original options
         input_options = model_copy(options)
-        if input_options.idempotency_key is None and input_options.method.lower() != "get":
+        if (
+            input_options.idempotency_key is None
+            and input_options.method.lower() != "get"
+        ):
             # ensure the idempotency key is reused between requests
             input_options.idempotency_key = self._idempotency_key()
 
@@ -1578,7 +1636,12 @@ class AsyncAPIClient(BaseClient[httpx.AsyncClient, AsyncStream[Any]]):
         )
 
     async def _sleep_for_retry(
-        self, *, retries_taken: int, max_retries: int, options: FinalRequestOptions, response: httpx.Response | None
+        self,
+        *,
+        retries_taken: int,
+        max_retries: int,
+        options: FinalRequestOptions,
+        response: httpx.Response | None,
     ) -> None:
         remaining_retries = max_retries - retries_taken
         if remaining_retries == 1:
@@ -1586,7 +1649,9 @@ class AsyncAPIClient(BaseClient[httpx.AsyncClient, AsyncStream[Any]]):
         else:
             log.debug("%i retries left", remaining_retries)
 
-        timeout = self._calculate_retry_timeout(remaining_retries, options, response.headers if response else None)
+        timeout = self._calculate_retry_timeout(
+            remaining_retries, options, response.headers if response else None
+        )
         log.info("Retrying request to %s in %f seconds", options.url, timeout)
 
         await anyio.sleep(timeout)
@@ -1612,7 +1677,9 @@ class AsyncAPIClient(BaseClient[httpx.AsyncClient, AsyncStream[Any]]):
             and (not stream or bool(response.request.headers.get(RAW_RESPONSE_HEADER)))
         ):
             if not issubclass(origin, AsyncAPIResponse):
-                raise TypeError(f"API Response types must subclass {AsyncAPIResponse}; Received {origin}")
+                raise TypeError(
+                    f"API Response types must subclass {AsyncAPIResponse}; Received {origin}"
+                )
 
             response_cls = cast("type[BaseAPIResponse[Any]]", cast_to)
             return cast(
@@ -1634,7 +1701,9 @@ class AsyncAPIClient(BaseClient[httpx.AsyncClient, AsyncStream[Any]]):
         api_response = AsyncAPIResponse(
             raw=response,
             client=self,
-            cast_to=cast("type[ResponseT]", cast_to),  # pyright: ignore[reportUnnecessaryCast]
+            cast_to=cast(
+                "type[ResponseT]", cast_to
+            ),  # pyright: ignore[reportUnnecessaryCast]
             stream=stream,
             stream_cls=stream_cls,
             options=options,
@@ -1747,7 +1816,11 @@ class AsyncAPIClient(BaseClient[httpx.AsyncClient, AsyncStream[Any]]):
         stream_cls: type[_AsyncStreamT] | None = None,
     ) -> ResponseT | _AsyncStreamT:
         opts = FinalRequestOptions.construct(
-            method="post", url=path, json_data=body, files=await async_to_httpx_files(files), **options
+            method="post",
+            url=path,
+            json_data=body,
+            files=await async_to_httpx_files(files),
+            **options,
         )
         return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
 
@@ -1759,7 +1832,9 @@ class AsyncAPIClient(BaseClient[httpx.AsyncClient, AsyncStream[Any]]):
         body: Body | None = None,
         options: RequestOptions = {},
     ) -> ResponseT:
-        opts = FinalRequestOptions.construct(method="patch", url=path, json_data=body, **options)
+        opts = FinalRequestOptions.construct(
+            method="patch", url=path, json_data=body, **options
+        )
         return await self.request(cast_to, opts)
 
     async def put(
@@ -1772,7 +1847,11 @@ class AsyncAPIClient(BaseClient[httpx.AsyncClient, AsyncStream[Any]]):
         options: RequestOptions = {},
     ) -> ResponseT:
         opts = FinalRequestOptions.construct(
-            method="put", url=path, json_data=body, files=await async_to_httpx_files(files), **options
+            method="put",
+            url=path,
+            json_data=body,
+            files=await async_to_httpx_files(files),
+            **options,
         )
         return await self.request(cast_to, opts)
 
@@ -1784,7 +1863,9 @@ class AsyncAPIClient(BaseClient[httpx.AsyncClient, AsyncStream[Any]]):
         body: Body | None = None,
         options: RequestOptions = {},
     ) -> ResponseT:
-        opts = FinalRequestOptions.construct(method="delete", url=path, json_data=body, **options)
+        opts = FinalRequestOptions.construct(
+            method="delete", url=path, json_data=body, **options
+        )
         return await self.request(cast_to, opts)
 
     def get_api_list(
@@ -1797,7 +1878,9 @@ class AsyncAPIClient(BaseClient[httpx.AsyncClient, AsyncStream[Any]]):
         options: RequestOptions = {},
         method: str = "get",
     ) -> AsyncPaginator[_T, AsyncPageT]:
-        opts = FinalRequestOptions.construct(method=method, url=path, json_data=body, **options)
+        opts = FinalRequestOptions.construct(
+            method=method, url=path, json_data=body, **options
+        )
         return self._request_api_list(model, page, opts)
 
 

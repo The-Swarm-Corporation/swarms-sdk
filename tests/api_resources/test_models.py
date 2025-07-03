@@ -15,7 +15,9 @@ base_url = os.environ.get("TEST_API_BASE_URL", "http://127.0.0.1:4010")
 
 
 class TestModels:
-    parametrize = pytest.mark.parametrize("client", [False, True], indirect=True, ids=["loose", "strict"])
+    parametrize = pytest.mark.parametrize(
+        "client", [False, True], indirect=True, ids=["loose", "strict"]
+    )
 
     @pytest.mark.skip()
     @parametrize
@@ -48,7 +50,10 @@ class TestModels:
 
 class TestAsyncModels:
     parametrize = pytest.mark.parametrize(
-        "async_client", [False, True, {"http_client": "aiohttp"}], indirect=True, ids=["loose", "strict", "aiohttp"]
+        "async_client",
+        [False, True, {"http_client": "aiohttp"}],
+        indirect=True,
+        ids=["loose", "strict", "aiohttp"],
     )
 
     @pytest.mark.skip()
@@ -59,7 +64,9 @@ class TestAsyncModels:
 
     @pytest.mark.skip()
     @parametrize
-    async def test_raw_response_list_available(self, async_client: AsyncSwarmsClient) -> None:
+    async def test_raw_response_list_available(
+        self, async_client: AsyncSwarmsClient
+    ) -> None:
         response = await async_client.models.with_raw_response.list_available()
 
         assert response.is_closed is True
@@ -69,7 +76,9 @@ class TestAsyncModels:
 
     @pytest.mark.skip()
     @parametrize
-    async def test_streaming_response_list_available(self, async_client: AsyncSwarmsClient) -> None:
+    async def test_streaming_response_list_available(
+        self, async_client: AsyncSwarmsClient
+    ) -> None:
         async with async_client.models.with_streaming_response.list_available() as response:
             assert not response.is_closed
             assert response.http_request.headers.get("X-Stainless-Lang") == "python"

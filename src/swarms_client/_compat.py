@@ -25,7 +25,9 @@ if TYPE_CHECKING:
     def parse_date(value: date | StrBytesIntFloat) -> date:  # noqa: ARG001
         ...
 
-    def parse_datetime(value: Union[datetime, StrBytesIntFloat]) -> datetime:  # noqa: ARG001
+    def parse_datetime(
+        value: Union[datetime, StrBytesIntFloat],
+    ) -> datetime:  # noqa: ARG001
         ...
 
     def get_args(t: type[Any]) -> tuple[Any, ...]:  # noqa: ARG001
@@ -52,7 +54,10 @@ else:
             is_typeddict as is_typeddict,
             is_literal_type as is_literal_type,
         )
-        from pydantic.v1.datetime_parse import parse_date as parse_date, parse_datetime as parse_datetime
+        from pydantic.v1.datetime_parse import (
+            parse_date as parse_date,
+            parse_datetime as parse_datetime,
+        )
     else:
         from pydantic.typing import (
             get_args as get_args,
@@ -61,7 +66,10 @@ else:
             is_typeddict as is_typeddict,
             is_literal_type as is_literal_type,
         )
-        from pydantic.datetime_parse import parse_date as parse_date, parse_datetime as parse_datetime
+        from pydantic.datetime_parse import (
+            parse_date as parse_date,
+            parse_datetime as parse_datetime,
+        )
 
 
 # refactored config
@@ -80,7 +88,9 @@ def parse_obj(model: type[_ModelT], value: object) -> _ModelT:
     if PYDANTIC_V2:
         return model.model_validate(value)
     else:
-        return cast(_ModelT, model.parse_obj(value))  # pyright: ignore[reportDeprecated, reportUnnecessaryCast]
+        return cast(
+            _ModelT, model.parse_obj(value)
+        )  # pyright: ignore[reportDeprecated, reportUnnecessaryCast]
 
 
 def field_is_required(field: FieldInfo) -> bool:
@@ -206,13 +216,16 @@ if TYPE_CHECKING:
         @overload
         def __get__(self, instance: object, owner: type[Any] | None = None) -> _T: ...
 
-        def __get__(self, instance: object, owner: type[Any] | None = None) -> _T | Self:
+        def __get__(
+            self, instance: object, owner: type[Any] | None = None
+        ) -> _T | Self:
             raise NotImplementedError()
 
         def __set_name__(self, owner: type[Any], name: str) -> None: ...
 
         # __set__ is not defined at runtime, but @cached_property is designed to be settable
         def __set__(self, instance: object, value: _T) -> None: ...
+
 else:
     from functools import cached_property as cached_property
 

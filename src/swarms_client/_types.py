@@ -16,7 +16,15 @@ from typing import (
     Optional,
     Sequence,
 )
-from typing_extensions import Set, Literal, Protocol, TypeAlias, TypedDict, override, runtime_checkable
+from typing_extensions import (
+    Set,
+    Literal,
+    Protocol,
+    TypeAlias,
+    TypedDict,
+    override,
+    runtime_checkable,
+)
 
 import httpx
 import pydantic
@@ -44,7 +52,9 @@ if TYPE_CHECKING:
     FileContent = Union[IO[bytes], bytes, PathLike[str]]
 else:
     Base64FileInput = Union[IO[bytes], PathLike]
-    FileContent = Union[IO[bytes], bytes, PathLike]  # PathLike is not subscriptable in Python 3.8.
+    FileContent = Union[
+        IO[bytes], bytes, PathLike
+    ]  # PathLike is not subscriptable in Python 3.8.
 FileTypes = Union[
     # file (or bytes)
     FileContent,
@@ -69,7 +79,9 @@ HttpxFileTypes = Union[
     # (filename, file (or bytes), content_type, headers)
     Tuple[Optional[str], HttpxFileContent, Optional[str], Mapping[str, str]],
 ]
-HttpxRequestFiles = Union[Mapping[str, HttpxFileTypes], Sequence[Tuple[str, HttpxFileTypes]]]
+HttpxRequestFiles = Union[
+    Mapping[str, HttpxFileTypes], Sequence[Tuple[str, HttpxFileTypes]]
+]
 
 # Workaround to support (cast_to: Type[ResponseT]) -> ResponseT
 # where ResponseT includes `None`. In order to support directly
@@ -194,7 +206,12 @@ StrBytesIntFloat = Union[str, bytes, int, float]
 
 # Note: copied from Pydantic
 # https://github.com/pydantic/pydantic/blob/6f31f8f68ef011f84357330186f603ff295312fd/pydantic/main.py#L79
-IncEx: TypeAlias = Union[Set[int], Set[str], Mapping[int, Union["IncEx", bool]], Mapping[str, Union["IncEx", bool]]]
+IncEx: TypeAlias = Union[
+    Set[int],
+    Set[str],
+    Mapping[int, Union["IncEx", bool]],
+    Mapping[str, Union["IncEx", bool]],
+]
 
 PostParser = Callable[[Any], Any]
 

@@ -15,7 +15,9 @@ base_url = os.environ.get("TEST_API_BASE_URL", "http://127.0.0.1:4010")
 
 
 class TestAgent:
-    parametrize = pytest.mark.parametrize("client", [False, True], indirect=True, ids=["loose", "strict"])
+    parametrize = pytest.mark.parametrize(
+        "client", [False, True], indirect=True, ids=["loose", "strict"]
+    )
 
     @pytest.mark.skip()
     @parametrize
@@ -73,7 +75,10 @@ class TestAgent:
 
 class TestAsyncAgent:
     parametrize = pytest.mark.parametrize(
-        "async_client", [False, True, {"http_client": "aiohttp"}], indirect=True, ids=["loose", "strict", "aiohttp"]
+        "async_client",
+        [False, True, {"http_client": "aiohttp"}],
+        indirect=True,
+        ids=["loose", "strict", "aiohttp"],
     )
 
     @pytest.mark.skip()
@@ -84,7 +89,9 @@ class TestAsyncAgent:
 
     @pytest.mark.skip()
     @parametrize
-    async def test_method_run_with_all_params(self, async_client: AsyncSwarmsClient) -> None:
+    async def test_method_run_with_all_params(
+        self, async_client: AsyncSwarmsClient
+    ) -> None:
         agent = await async_client.agent.run(
             agent_config={
                 "agent_name": "agent_name",
@@ -119,7 +126,9 @@ class TestAsyncAgent:
 
     @pytest.mark.skip()
     @parametrize
-    async def test_streaming_response_run(self, async_client: AsyncSwarmsClient) -> None:
+    async def test_streaming_response_run(
+        self, async_client: AsyncSwarmsClient
+    ) -> None:
         async with async_client.agent.with_streaming_response.run() as response:
             assert not response.is_closed
             assert response.http_request.headers.get("X-Stainless-Lang") == "python"

@@ -60,7 +60,9 @@ class AgentResource(SyncAPIResource):
         self,
         *,
         agent_config: Optional[AgentSpecParam] | NotGiven = NOT_GIVEN,
-        history: Union[Dict[str, object], Iterable[Dict[str, str]], None] | NotGiven = NOT_GIVEN,
+        history: (
+            Union[Dict[str, object], Iterable[Dict[str, str]], None] | NotGiven
+        ) = NOT_GIVEN,
         img: Optional[str] | NotGiven = NOT_GIVEN,
         imgs: Optional[List[str]] | NotGiven = NOT_GIVEN,
         task: Optional[str] | NotGiven = NOT_GIVEN,
@@ -109,7 +111,10 @@ class AgentResource(SyncAPIResource):
                 agent_run_params.AgentRunParams,
             ),
             options=make_request_options(
-                extra_headers=extra_headers, extra_query=extra_query, extra_body=extra_body, timeout=timeout
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
             ),
             cast_to=AgentRunResponse,
         )
@@ -143,7 +148,9 @@ class AsyncAgentResource(AsyncAPIResource):
         self,
         *,
         agent_config: Optional[AgentSpecParam] | NotGiven = NOT_GIVEN,
-        history: Union[Dict[str, object], Iterable[Dict[str, str]], None] | NotGiven = NOT_GIVEN,
+        history: (
+            Union[Dict[str, object], Iterable[Dict[str, str]], None] | NotGiven
+        ) = NOT_GIVEN,
         img: Optional[str] | NotGiven = NOT_GIVEN,
         imgs: Optional[List[str]] | NotGiven = NOT_GIVEN,
         task: Optional[str] | NotGiven = NOT_GIVEN,
@@ -192,7 +199,10 @@ class AsyncAgentResource(AsyncAPIResource):
                 agent_run_params.AgentRunParams,
             ),
             options=make_request_options(
-                extra_headers=extra_headers, extra_query=extra_query, extra_body=extra_body, timeout=timeout
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
             ),
             cast_to=AgentRunResponse,
         )

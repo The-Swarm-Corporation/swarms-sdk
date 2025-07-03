@@ -77,7 +77,10 @@ class BatchResource(SyncAPIResource):
             "/v1/agent/batch/completions",
             body=maybe_transform(body, Iterable[AgentCompletionParam]),
             options=make_request_options(
-                extra_headers=extra_headers, extra_query=extra_query, extra_body=extra_body, timeout=timeout
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
             ),
             cast_to=BatchRunResponse,
         )
@@ -137,7 +140,10 @@ class AsyncBatchResource(AsyncAPIResource):
             "/v1/agent/batch/completions",
             body=await async_maybe_transform(body, Iterable[AgentCompletionParam]),
             options=make_request_options(
-                extra_headers=extra_headers, extra_query=extra_query, extra_body=extra_body, timeout=timeout
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
             ),
             cast_to=BatchRunResponse,
         )

@@ -24,7 +24,9 @@ from swarms_client._models import BaseModel
 BaseModelT = TypeVar("BaseModelT", bound=BaseModel)
 
 
-def assert_matches_model(model: type[BaseModelT], value: BaseModelT, *, path: list[str]) -> bool:
+def assert_matches_model(
+    model: type[BaseModelT], value: BaseModelT, *, path: list[str]
+) -> bool:
     for name, field in get_model_fields(model).items():
         field_value = getattr(value, name)
         if PYDANTIC_V2:
@@ -114,7 +116,9 @@ def assert_matches_type(
                     # valid
                     return
 
-                return assert_matches_type(type_=variants[not none_index], value=value, path=path)
+                return assert_matches_type(
+                    type_=variants[not none_index], value=value, path=path
+                )
 
         for i, variant in enumerate(variants):
             try:

@@ -14,7 +14,9 @@ from swarms_client import SwarmsClient, AsyncSwarmsClient, DefaultAioHttpClient
 from swarms_client._utils import is_dict
 
 if TYPE_CHECKING:
-    from _pytest.fixtures import FixtureRequest  # pyright: ignore[reportPrivateImportUsage]
+    from _pytest.fixtures import (
+        FixtureRequest,
+    )  # pyright: ignore[reportPrivateImportUsage]
 
 pytest.register_assert_rewrite("tests.utils")
 
@@ -32,15 +34,25 @@ def pytest_collection_modifyitems(items: list[pytest.Function]) -> None:
     # We skip tests that use both the aiohttp client and respx_mock as respx_mock
     # doesn't support custom transports.
     for item in items:
-        if "async_client" not in item.fixturenames or "respx_mock" not in item.fixturenames:
+        if (
+            "async_client" not in item.fixturenames
+            or "respx_mock" not in item.fixturenames
+        ):
             continue
 
         if not hasattr(item, "callspec"):
             continue
 
         async_client_param = item.callspec.params.get("async_client")
-        if is_dict(async_client_param) and async_client_param.get("http_client") == "aiohttp":
-            item.add_marker(pytest.mark.skip(reason="aiohttp client is not compatible with respx_mock"))
+        if (
+            is_dict(async_client_param)
+            and async_client_param.get("http_client") == "aiohttp"
+        ):
+            item.add_marker(
+                pytest.mark.skip(
+                    reason="aiohttp client is not compatible with respx_mock"
+                )
+            )
 
 
 base_url = os.environ.get("TEST_API_BASE_URL", "http://127.0.0.1:4010")
@@ -52,9 +64,13 @@ api_key = "My API Key"
 def client(request: FixtureRequest) -> Iterator[SwarmsClient]:
     strict = getattr(request, "param", True)
     if not isinstance(strict, bool):
-        raise TypeError(f"Unexpected fixture parameter type {type(strict)}, expected {bool}")
+        raise TypeError(
+            f"Unexpected fixture parameter type {type(strict)}, expected {bool}"
+        )
 
-    with SwarmsClient(base_url=base_url, api_key=api_key, _strict_response_validation=strict) as client:
+    with SwarmsClient(
+        base_url=base_url, api_key=api_key, _strict_response_validation=strict
+    ) as client:
         yield client
 
 
@@ -76,9 +92,14 @@ async def async_client(request: FixtureRequest) -> AsyncIterator[AsyncSwarmsClie
         if http_client_type == "aiohttp":
             http_client = DefaultAioHttpClient()
     else:
-        raise TypeError(f"Unexpected fixture parameter type {type(param)}, expected bool or dict")
+        raise TypeError(
+            f"Unexpected fixture parameter type {type(param)}, expected bool or dict"
+        )
 
     async with AsyncSwarmsClient(
-        base_url=base_url, api_key=api_key, _strict_response_validation=strict, http_client=http_client
+        base_url=base_url,
+        api_key=api_key,
+        _strict_response_validation=strict,
+        http_client=http_client,
     ) as client:
         yield client

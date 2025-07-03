@@ -21,7 +21,10 @@ else:
     # backport of https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread
     # for Python 3.8 support
     async def _asyncio_to_thread(
-        func: Callable[T_ParamSpec, T_Retval], /, *args: T_ParamSpec.args, **kwargs: T_ParamSpec.kwargs
+        func: Callable[T_ParamSpec, T_Retval],
+        /,
+        *args: T_ParamSpec.args,
+        **kwargs: T_ParamSpec.kwargs,
     ) -> Any:
         """Asynchronously run function *func* in a separate thread.
 
@@ -39,7 +42,10 @@ else:
 
 
 async def to_thread(
-    func: Callable[T_ParamSpec, T_Retval], /, *args: T_ParamSpec.args, **kwargs: T_ParamSpec.kwargs
+    func: Callable[T_ParamSpec, T_Retval],
+    /,
+    *args: T_ParamSpec.args,
+    **kwargs: T_ParamSpec.kwargs,
 ) -> T_Retval:
     if sniffio.current_async_library() == "asyncio":
         return await _asyncio_to_thread(func, *args, **kwargs)
@@ -50,7 +56,9 @@ async def to_thread(
 
 
 # inspired by `asyncer`, https://github.com/tiangolo/asyncer
-def asyncify(function: Callable[T_ParamSpec, T_Retval]) -> Callable[T_ParamSpec, Awaitable[T_Retval]]:
+def asyncify(
+    function: Callable[T_ParamSpec, T_Retval],
+) -> Callable[T_ParamSpec, Awaitable[T_Retval]]:
     """
     Take a blocking function and create an async one that receives the same
     positional and keyword arguments. For python version 3.9 and above, it uses
@@ -80,7 +88,9 @@ def asyncify(function: Callable[T_ParamSpec, T_Retval]) -> Callable[T_ParamSpec,
     and returns the result.
     """
 
-    async def wrapper(*args: T_ParamSpec.args, **kwargs: T_ParamSpec.kwargs) -> T_Retval:
+    async def wrapper(
+        *args: T_ParamSpec.args, **kwargs: T_ParamSpec.kwargs
+    ) -> T_Retval:
         return await to_thread(function, *args, **kwargs)
 
     return wrapper

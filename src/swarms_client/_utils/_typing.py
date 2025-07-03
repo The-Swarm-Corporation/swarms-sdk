@@ -46,7 +46,9 @@ def is_typevar(typ: type) -> bool:
     return type(typ) == TypeVar  # type: ignore
 
 
-_TYPE_ALIAS_TYPES: tuple[type[typing_extensions.TypeAliasType], ...] = (typing_extensions.TypeAliasType,)
+_TYPE_ALIAS_TYPES: tuple[type[typing_extensions.TypeAliasType], ...] = (
+    typing_extensions.TypeAliasType,
+)
 if sys.version_info >= (3, 12):
     _TYPE_ALIAS_TYPES = (*_TYPE_ALIAS_TYPES, typing.TypeAliasType)
 
@@ -80,7 +82,9 @@ def extract_type_arg(typ: type, index: int) -> type:
     try:
         return cast(type, args[index])
     except IndexError as err:
-        raise RuntimeError(f"Expected type {typ} to have a type argument at index {index} but it did not") from err
+        raise RuntimeError(
+            f"Expected type {typ} to have a type argument at index {index} but it did not"
+        ) from err
 
 
 def extract_type_var_from_base(
@@ -148,4 +152,7 @@ def extract_type_var_from_base(
 
         return extracted
 
-    raise RuntimeError(failure_message or f"Could not resolve inner type variable at index {index} for {typ}")
+    raise RuntimeError(
+        failure_message
+        or f"Could not resolve inner type variable at index {index} for {typ}"
+    )

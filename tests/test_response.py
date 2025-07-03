@@ -74,7 +74,9 @@ def test_response_parse_mismatched_basemodel(client: SwarmsClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_async_response_parse_mismatched_basemodel(async_client: AsyncSwarmsClient) -> None:
+async def test_async_response_parse_mismatched_basemodel(
+    async_client: AsyncSwarmsClient,
+) -> None:
     response = AsyncAPIResponse(
         raw=httpx.Response(200, content=b"foo"),
         client=async_client,
@@ -106,7 +108,9 @@ def test_response_parse_custom_stream(client: SwarmsClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_async_response_parse_custom_stream(async_client: AsyncSwarmsClient) -> None:
+async def test_async_response_parse_custom_stream(
+    async_client: AsyncSwarmsClient,
+) -> None:
     response = AsyncAPIResponse(
         raw=httpx.Response(200, content=b"foo"),
         client=async_client,
@@ -141,7 +145,9 @@ def test_response_parse_custom_model(client: SwarmsClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_async_response_parse_custom_model(async_client: AsyncSwarmsClient) -> None:
+async def test_async_response_parse_custom_model(
+    async_client: AsyncSwarmsClient,
+) -> None:
     response = AsyncAPIResponse(
         raw=httpx.Response(200, content=json.dumps({"foo": "hello!", "bar": 2})),
         client=async_client,
@@ -173,7 +179,9 @@ def test_response_parse_annotated_type(client: SwarmsClient) -> None:
     assert obj.bar == 2
 
 
-async def test_async_response_parse_annotated_type(async_client: AsyncSwarmsClient) -> None:
+async def test_async_response_parse_annotated_type(
+    async_client: AsyncSwarmsClient,
+) -> None:
     response = AsyncAPIResponse(
         raw=httpx.Response(200, content=json.dumps({"foo": "hello!", "bar": 2})),
         client=async_client,
@@ -201,7 +209,9 @@ async def test_async_response_parse_annotated_type(async_client: AsyncSwarmsClie
         ("FalSe", False),
     ],
 )
-def test_response_parse_bool(client: SwarmsClient, content: str, expected: bool) -> None:
+def test_response_parse_bool(
+    client: SwarmsClient, content: str, expected: bool
+) -> None:
     response = APIResponse(
         raw=httpx.Response(200, content=content),
         client=client,
@@ -226,7 +236,9 @@ def test_response_parse_bool(client: SwarmsClient, content: str, expected: bool)
         ("FalSe", False),
     ],
 )
-async def test_async_response_parse_bool(client: AsyncSwarmsClient, content: str, expected: bool) -> None:
+async def test_async_response_parse_bool(
+    client: AsyncSwarmsClient, content: str, expected: bool
+) -> None:
     response = AsyncAPIResponse(
         raw=httpx.Response(200, content=content),
         client=client,
@@ -245,9 +257,13 @@ class OtherModel(BaseModel):
 
 
 @pytest.mark.parametrize("client", [False], indirect=True)  # loose validation
-def test_response_parse_expect_model_union_non_json_content(client: SwarmsClient) -> None:
+def test_response_parse_expect_model_union_non_json_content(
+    client: SwarmsClient,
+) -> None:
     response = APIResponse(
-        raw=httpx.Response(200, content=b"foo", headers={"Content-Type": "application/text"}),
+        raw=httpx.Response(
+            200, content=b"foo", headers={"Content-Type": "application/text"}
+        ),
         client=client,
         stream=False,
         stream_cls=None,
@@ -262,9 +278,13 @@ def test_response_parse_expect_model_union_non_json_content(client: SwarmsClient
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("async_client", [False], indirect=True)  # loose validation
-async def test_async_response_parse_expect_model_union_non_json_content(async_client: AsyncSwarmsClient) -> None:
+async def test_async_response_parse_expect_model_union_non_json_content(
+    async_client: AsyncSwarmsClient,
+) -> None:
     response = AsyncAPIResponse(
-        raw=httpx.Response(200, content=b"foo", headers={"Content-Type": "application/text"}),
+        raw=httpx.Response(
+            200, content=b"foo", headers={"Content-Type": "application/text"}
+        ),
         client=async_client,
         stream=False,
         stream_cls=None,

@@ -53,7 +53,10 @@ class ModelsResource(SyncAPIResource):
         return self._get(
             "/v1/models/available",
             options=make_request_options(
-                extra_headers=extra_headers, extra_query=extra_query, extra_body=extra_body, timeout=timeout
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
             ),
             cast_to=ModelListAvailableResponse,
         )
@@ -93,7 +96,10 @@ class AsyncModelsResource(AsyncAPIResource):
         return await self._get(
             "/v1/models/available",
             options=make_request_options(
-                extra_headers=extra_headers, extra_query=extra_query, extra_body=extra_body, timeout=timeout
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
             ),
             cast_to=ModelListAvailableResponse,
         )

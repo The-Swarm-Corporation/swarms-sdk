@@ -11,13 +11,17 @@ from swarms_client._streaming import Stream, AsyncStream, ServerSentEvent
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("sync", [True, False], ids=["sync", "async"])
-async def test_basic(sync: bool, client: SwarmsClient, async_client: AsyncSwarmsClient) -> None:
+async def test_basic(
+    sync: bool, client: SwarmsClient, async_client: AsyncSwarmsClient
+) -> None:
     def body() -> Iterator[bytes]:
         yield b"event: completion\n"
         yield b'data: {"foo":true}\n'
         yield b"\n"
 
-    iterator = make_event_iterator(content=body(), sync=sync, client=client, async_client=async_client)
+    iterator = make_event_iterator(
+        content=body(), sync=sync, client=client, async_client=async_client
+    )
 
     sse = await iter_next(iterator)
     assert sse.event == "completion"
@@ -28,12 +32,16 @@ async def test_basic(sync: bool, client: SwarmsClient, async_client: AsyncSwarms
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("sync", [True, False], ids=["sync", "async"])
-async def test_data_missing_event(sync: bool, client: SwarmsClient, async_client: AsyncSwarmsClient) -> None:
+async def test_data_missing_event(
+    sync: bool, client: SwarmsClient, async_client: AsyncSwarmsClient
+) -> None:
     def body() -> Iterator[bytes]:
         yield b'data: {"foo":true}\n'
         yield b"\n"
 
-    iterator = make_event_iterator(content=body(), sync=sync, client=client, async_client=async_client)
+    iterator = make_event_iterator(
+        content=body(), sync=sync, client=client, async_client=async_client
+    )
 
     sse = await iter_next(iterator)
     assert sse.event is None
@@ -44,12 +52,16 @@ async def test_data_missing_event(sync: bool, client: SwarmsClient, async_client
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("sync", [True, False], ids=["sync", "async"])
-async def test_event_missing_data(sync: bool, client: SwarmsClient, async_client: AsyncSwarmsClient) -> None:
+async def test_event_missing_data(
+    sync: bool, client: SwarmsClient, async_client: AsyncSwarmsClient
+) -> None:
     def body() -> Iterator[bytes]:
         yield b"event: ping\n"
         yield b"\n"
 
-    iterator = make_event_iterator(content=body(), sync=sync, client=client, async_client=async_client)
+    iterator = make_event_iterator(
+        content=body(), sync=sync, client=client, async_client=async_client
+    )
 
     sse = await iter_next(iterator)
     assert sse.event == "ping"
@@ -60,14 +72,18 @@ async def test_event_missing_data(sync: bool, client: SwarmsClient, async_client
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("sync", [True, False], ids=["sync", "async"])
-async def test_multiple_events(sync: bool, client: SwarmsClient, async_client: AsyncSwarmsClient) -> None:
+async def test_multiple_events(
+    sync: bool, client: SwarmsClient, async_client: AsyncSwarmsClient
+) -> None:
     def body() -> Iterator[bytes]:
         yield b"event: ping\n"
         yield b"\n"
         yield b"event: completion\n"
         yield b"\n"
 
-    iterator = make_event_iterator(content=body(), sync=sync, client=client, async_client=async_client)
+    iterator = make_event_iterator(
+        content=body(), sync=sync, client=client, async_client=async_client
+    )
 
     sse = await iter_next(iterator)
     assert sse.event == "ping"
@@ -82,7 +98,9 @@ async def test_multiple_events(sync: bool, client: SwarmsClient, async_client: A
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("sync", [True, False], ids=["sync", "async"])
-async def test_multiple_events_with_data(sync: bool, client: SwarmsClient, async_client: AsyncSwarmsClient) -> None:
+async def test_multiple_events_with_data(
+    sync: bool, client: SwarmsClient, async_client: AsyncSwarmsClient
+) -> None:
     def body() -> Iterator[bytes]:
         yield b"event: ping\n"
         yield b'data: {"foo":true}\n'
@@ -91,7 +109,9 @@ async def test_multiple_events_with_data(sync: bool, client: SwarmsClient, async
         yield b'data: {"bar":false}\n'
         yield b"\n"
 
-    iterator = make_event_iterator(content=body(), sync=sync, client=client, async_client=async_client)
+    iterator = make_event_iterator(
+        content=body(), sync=sync, client=client, async_client=async_client
+    )
 
     sse = await iter_next(iterator)
     assert sse.event == "ping"
@@ -118,7 +138,9 @@ async def test_multiple_data_lines_with_empty_line(
         yield b"data: true}\n"
         yield b"\n\n"
 
-    iterator = make_event_iterator(content=body(), sync=sync, client=client, async_client=async_client)
+    iterator = make_event_iterator(
+        content=body(), sync=sync, client=client, async_client=async_client
+    )
 
     sse = await iter_next(iterator)
     assert sse.event == "ping"
@@ -138,7 +160,9 @@ async def test_data_json_escaped_double_new_line(
         yield b'data: {"foo": "my long\\n\\ncontent"}'
         yield b"\n\n"
 
-    iterator = make_event_iterator(content=body(), sync=sync, client=client, async_client=async_client)
+    iterator = make_event_iterator(
+        content=body(), sync=sync, client=client, async_client=async_client
+    )
 
     sse = await iter_next(iterator)
     assert sse.event == "ping"
@@ -149,7 +173,9 @@ async def test_data_json_escaped_double_new_line(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("sync", [True, False], ids=["sync", "async"])
-async def test_multiple_data_lines(sync: bool, client: SwarmsClient, async_client: AsyncSwarmsClient) -> None:
+async def test_multiple_data_lines(
+    sync: bool, client: SwarmsClient, async_client: AsyncSwarmsClient
+) -> None:
     def body() -> Iterator[bytes]:
         yield b"event: ping\n"
         yield b"data: {\n"
@@ -157,7 +183,9 @@ async def test_multiple_data_lines(sync: bool, client: SwarmsClient, async_clien
         yield b"data: true}\n"
         yield b"\n\n"
 
-    iterator = make_event_iterator(content=body(), sync=sync, client=client, async_client=async_client)
+    iterator = make_event_iterator(
+        content=body(), sync=sync, client=client, async_client=async_client
+    )
 
     sse = await iter_next(iterator)
     assert sse.event == "ping"
@@ -180,7 +208,9 @@ async def test_special_new_line_character(
         yield b'data: {"content":"foo"}\n'
         yield b"\n"
 
-    iterator = make_event_iterator(content=body(), sync=sync, client=client, async_client=async_client)
+    iterator = make_event_iterator(
+        content=body(), sync=sync, client=client, async_client=async_client
+    )
 
     sse = await iter_next(iterator)
     assert sse.event is None
@@ -213,7 +243,9 @@ async def test_multi_byte_character_multiple_chunks(
         yield b'"}\n'
         yield b"\n"
 
-    iterator = make_event_iterator(content=body(), sync=sync, client=client, async_client=async_client)
+    iterator = make_event_iterator(
+        content=body(), sync=sync, client=client, async_client=async_client
+    )
 
     sse = await iter_next(iterator)
     assert sse.event is None
@@ -225,14 +257,18 @@ async def to_aiter(iter: Iterator[bytes]) -> AsyncIterator[bytes]:
         yield chunk
 
 
-async def iter_next(iter: Iterator[ServerSentEvent] | AsyncIterator[ServerSentEvent]) -> ServerSentEvent:
+async def iter_next(
+    iter: Iterator[ServerSentEvent] | AsyncIterator[ServerSentEvent],
+) -> ServerSentEvent:
     if isinstance(iter, AsyncIterator):
         return await iter.__anext__()
 
     return next(iter)
 
 
-async def assert_empty_iter(iter: Iterator[ServerSentEvent] | AsyncIterator[ServerSentEvent]) -> None:
+async def assert_empty_iter(
+    iter: Iterator[ServerSentEvent] | AsyncIterator[ServerSentEvent],
+) -> None:
     with pytest.raises((StopAsyncIteration, RuntimeError)):
         await iter_next(iter)
 
@@ -245,8 +281,12 @@ def make_event_iterator(
     async_client: AsyncSwarmsClient,
 ) -> Iterator[ServerSentEvent] | AsyncIterator[ServerSentEvent]:
     if sync:
-        return Stream(cast_to=object, client=client, response=httpx.Response(200, content=content))._iter_events()
+        return Stream(
+            cast_to=object, client=client, response=httpx.Response(200, content=content)
+        )._iter_events()
 
     return AsyncStream(
-        cast_to=object, client=async_client, response=httpx.Response(200, content=to_aiter(content))
+        cast_to=object,
+        client=async_client,
+        response=httpx.Response(200, content=to_aiter(content)),
     )._iter_events()

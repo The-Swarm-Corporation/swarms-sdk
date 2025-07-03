@@ -10,7 +10,9 @@ def test_too_many_positional_params() -> None:
     def foo(a: str | None = None) -> str | None:
         return a
 
-    with pytest.raises(TypeError, match=r"foo\(\) takes 1 argument\(s\) but 2 were given"):
+    with pytest.raises(
+        TypeError, match=r"foo\(\) takes 1 argument\(s\) but 2 were given"
+    ):
         foo("a", "b")  # type: ignore
 
 
@@ -88,7 +90,9 @@ def test_multiple_variants() -> None:
 
 def test_multiple_params_multiple_variants() -> None:
     @required_args(["a", "b"], ["c"])
-    def foo(*, a: str | None = None, b: str | None = None, c: str | None = None) -> str | None:
+    def foo(
+        *, a: str | None = None, b: str | None = None, c: str | None = None
+    ) -> str | None:
         if a is not None:
             return a
         if b is not None:

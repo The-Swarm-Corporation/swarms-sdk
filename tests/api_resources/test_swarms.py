@@ -9,13 +9,19 @@ import pytest
 
 from tests.utils import assert_matches_type
 from swarms_client import SwarmsClient, AsyncSwarmsClient
-from swarms_client.types import SwarmRunResponse, SwarmGetLogsResponse, SwarmCheckAvailableResponse
+from swarms_client.types import (
+    SwarmRunResponse,
+    SwarmGetLogsResponse,
+    SwarmCheckAvailableResponse,
+)
 
 base_url = os.environ.get("TEST_API_BASE_URL", "http://127.0.0.1:4010")
 
 
 class TestSwarms:
-    parametrize = pytest.mark.parametrize("client", [False, True], indirect=True, ids=["loose", "strict"])
+    parametrize = pytest.mark.parametrize(
+        "client", [False, True], indirect=True, ids=["loose", "strict"]
+    )
 
     @pytest.mark.skip()
     @parametrize
@@ -140,18 +146,25 @@ class TestSwarms:
 
 class TestAsyncSwarms:
     parametrize = pytest.mark.parametrize(
-        "async_client", [False, True, {"http_client": "aiohttp"}], indirect=True, ids=["loose", "strict", "aiohttp"]
+        "async_client",
+        [False, True, {"http_client": "aiohttp"}],
+        indirect=True,
+        ids=["loose", "strict", "aiohttp"],
     )
 
     @pytest.mark.skip()
     @parametrize
-    async def test_method_check_available(self, async_client: AsyncSwarmsClient) -> None:
+    async def test_method_check_available(
+        self, async_client: AsyncSwarmsClient
+    ) -> None:
         swarm = await async_client.swarms.check_available()
         assert_matches_type(SwarmCheckAvailableResponse, swarm, path=["response"])
 
     @pytest.mark.skip()
     @parametrize
-    async def test_raw_response_check_available(self, async_client: AsyncSwarmsClient) -> None:
+    async def test_raw_response_check_available(
+        self, async_client: AsyncSwarmsClient
+    ) -> None:
         response = await async_client.swarms.with_raw_response.check_available()
 
         assert response.is_closed is True
@@ -161,7 +174,9 @@ class TestAsyncSwarms:
 
     @pytest.mark.skip()
     @parametrize
-    async def test_streaming_response_check_available(self, async_client: AsyncSwarmsClient) -> None:
+    async def test_streaming_response_check_available(
+        self, async_client: AsyncSwarmsClient
+    ) -> None:
         async with async_client.swarms.with_streaming_response.check_available() as response:
             assert not response.is_closed
             assert response.http_request.headers.get("X-Stainless-Lang") == "python"
@@ -189,7 +204,9 @@ class TestAsyncSwarms:
 
     @pytest.mark.skip()
     @parametrize
-    async def test_streaming_response_get_logs(self, async_client: AsyncSwarmsClient) -> None:
+    async def test_streaming_response_get_logs(
+        self, async_client: AsyncSwarmsClient
+    ) -> None:
         async with async_client.swarms.with_streaming_response.get_logs() as response:
             assert not response.is_closed
             assert response.http_request.headers.get("X-Stainless-Lang") == "python"
@@ -207,7 +224,9 @@ class TestAsyncSwarms:
 
     @pytest.mark.skip()
     @parametrize
-    async def test_method_run_with_all_params(self, async_client: AsyncSwarmsClient) -> None:
+    async def test_method_run_with_all_params(
+        self, async_client: AsyncSwarmsClient
+    ) -> None:
         swarm = await async_client.swarms.run(
             agents=[
                 {
@@ -253,7 +272,9 @@ class TestAsyncSwarms:
 
     @pytest.mark.skip()
     @parametrize
-    async def test_streaming_response_run(self, async_client: AsyncSwarmsClient) -> None:
+    async def test_streaming_response_run(
+        self, async_client: AsyncSwarmsClient
+    ) -> None:
         async with async_client.swarms.with_streaming_response.run() as response:
             assert not response.is_closed
             assert response.http_request.headers.get("X-Stainless-Lang") == "python"
