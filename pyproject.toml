@@ -1,11 +1,11 @@
 [project]
 name = "swarms-client"
 version = "0.1.8"
-description = "The official Python library for the swarms API"
+description = "The official Python library for the swarms-client API"
 dynamic = ["readme"]
 license = "Apache-2.0"
 authors = [
-{ name = "Swarms", email = "" },
+{ name = "Swarms Client", email = "kye@swarms.world" },
 ]
 dependencies = [
     "httpx>=0.23.0, <1",

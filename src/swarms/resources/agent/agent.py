@@ -59,7 +59,6 @@ class AgentResource(SyncAPIResource):
     def run(
         self,
         *,
-        x_api_key: str,
         agent_config: Optional[AgentSpecParam] | NotGiven = NOT_GIVEN,
         history: Union[Dict[str, object], Iterable[Dict[str, str]], None] | NotGiven = NOT_GIVEN,
         img: Optional[str] | NotGiven = NOT_GIVEN,
@@ -97,7 +96,6 @@ class AgentResource(SyncAPIResource):
 
           timeout: Override the client-level default timeout for this request, in seconds
         """
-        extra_headers = {"x-api-key": x_api_key, **(extra_headers or {})}
         return self._post(
             "/v1/agent/completions",
             body=maybe_transform(
@@ -144,7 +142,6 @@ class AsyncAgentResource(AsyncAPIResource):
     async def run(
         self,
         *,
-        x_api_key: str,
         agent_config: Optional[AgentSpecParam] | NotGiven = NOT_GIVEN,
         history: Union[Dict[str, object], Iterable[Dict[str, str]], None] | NotGiven = NOT_GIVEN,
         img: Optional[str] | NotGiven = NOT_GIVEN,
@@ -182,7 +179,6 @@ class AsyncAgentResource(AsyncAPIResource):
 
           timeout: Override the client-level default timeout for this request, in seconds
         """
-        extra_headers = {"x-api-key": x_api_key, **(extra_headers or {})}
         return await self._post(
             "/v1/agent/completions",
             body=await async_maybe_transform(

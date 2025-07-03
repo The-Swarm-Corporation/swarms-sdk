@@ -21,7 +21,7 @@ import pytest
 from respx import MockRouter
 from pydantic import ValidationError
 
-from swarms import Swarms, AsyncSwarms, APIResponseValidationError
+from swarms import SwarmsClient, AsyncSwarmsClient, APIResponseValidationError
 from swarms._types import Omit
 from swarms._models import BaseModel, FinalRequestOptions
 from swarms._exceptions import APIStatusError, APITimeoutError, APIResponseValidationError
@@ -50,7 +50,7 @@ def _low_retry_timeout(*_args: Any, **_kwargs: Any) -> float:
     return 0.1
 
 
-def _get_open_connections(client: Swarms | AsyncSwarms) -> int:
+def _get_open_connections(client: SwarmsClient | AsyncSwarmsClient) -> int:
     transport = client._client._transport
     assert isinstance(transport, httpx.HTTPTransport) or isinstance(transport, httpx.AsyncHTTPTransport)
 
@@ -58,8 +58,8 @@ def _get_open_connections(client: Swarms | AsyncSwarms) -> int:
     return len(pool._requests)
 
 
-class TestSwarms:
-    client = Swarms(base_url=base_url, api_key=api_key, _strict_response_validation=True)
+class TestSwarmsClient:
+    client = SwarmsClient(base_url=base_url, api_key=api_key, _strict_response_validation=True)
 
     @pytest.mark.respx(base_url=base_url)
     def test_raw_response(self, respx_mock: MockRouter) -> None:
@@ -106,7 +106,7 @@ class TestSwarms:
         assert isinstance(self.client.timeout, httpx.Timeout)
 
     def test_copy_default_headers(self) -> None:
-        client = Swarms(
+        client = SwarmsClient(
             base_url=base_url, api_key=api_key, _strict_response_validation=True, default_headers={"X-Foo": "bar"}
         )
         assert client.default_headers["X-Foo"] == "bar"
@@ -140,7 +140,7 @@ class TestSwarms:
             client.copy(set_default_headers={}, default_headers={"X-Foo": "Bar"})
 
     def test_copy_default_query(self) -> None:
-        client = Swarms(
+        client = SwarmsClient(
             base_url=base_url, api_key=api_key, _strict_response_validation=True, default_query={"foo": "bar"}
         )
         assert _get_params(client)["foo"] == "bar"
@@ -266,7 +266,9 @@ class TestSwarms:
         assert timeout == httpx.Timeout(100.0)
 
     def test_client_timeout_option(self) -> None:
-        client = Swarms(base_url=base_url, api_key=api_key, _strict_response_validation=True, timeout=httpx.Timeout(0))
+        client = SwarmsClient(
+            base_url=base_url, api_key=api_key, _strict_response_validation=True, timeout=httpx.Timeout(0)
+        )
 
         request = client._build_request(FinalRequestOptions(method="get", url="/foo"))
         timeout = httpx.Timeout(**request.extensions["timeout"])  # type: ignore
@@ -275,7 +277,7 @@ class TestSwarms:
     def test_http_client_timeout_option(self) -> None:
         # custom timeout given to the httpx client should be used
         with httpx.Client(timeout=None) as http_client:
-            client = Swarms(
+            client = SwarmsClient(
                 base_url=base_url, api_key=api_key, _strict_response_validation=True, http_client=http_client
             )
 
@@ -285,7 +287,7 @@ class TestSwarms:
 
         # no timeout given to the httpx client should not use the httpx default
         with httpx.Client() as http_client:
-            client = Swarms(
+            client = SwarmsClient(
                 base_url=base_url, api_key=api_key, _strict_response_validation=True, http_client=http_client
             )
 
@@ -295,7 +297,7 @@ class TestSwarms:
 
         # explicitly passing the default timeout currently results in it being ignored
         with httpx.Client(timeout=HTTPX_DEFAULT_TIMEOUT) as http_client:
-            client = Swarms(
+            client = SwarmsClient(
                 base_url=base_url, api_key=api_key, _strict_response_validation=True, http_client=http_client
             )
 
@@ -306,7 +308,7 @@ class TestSwarms:
     async def test_invalid_http_client(self) -> None:
         with pytest.raises(TypeError, match="Invalid `http_client` arg"):
             async with httpx.AsyncClient() as http_client:
-                Swarms(
+                SwarmsClient(
                     base_url=base_url,
                     api_key=api_key,
                     _strict_response_validation=True,
@@ -314,14 +316,14 @@ class TestSwarms:
                 )
 
     def test_default_headers_option(self) -> None:
-        client = Swarms(
+        client = SwarmsClient(
             base_url=base_url, api_key=api_key, _strict_response_validation=True, default_headers={"X-Foo": "bar"}
         )
         request = client._build_request(FinalRequestOptions(method="get", url="/foo"))
         assert request.headers.get("x-foo") == "bar"
         assert request.headers.get("x-stainless-lang") == "python"
 
-        client2 = Swarms(
+        client2 = SwarmsClient(
             base_url=base_url,
             api_key=api_key,
             _strict_response_validation=True,
@@ -335,26 +337,24 @@ class TestSwarms:
         assert request.headers.get("x-stainless-lang") == "my-overriding-header"
 
     def test_validate_headers(self) -> None:
-        client = Swarms(base_url=base_url, api_key=api_key, _strict_response_validation=True)
+        client = SwarmsClient(base_url=base_url, api_key=api_key, _strict_response_validation=True)
         request = client._build_request(FinalRequestOptions(method="get", url="/foo"))
-        assert request.headers.get("Authorization") == f"Bearer {api_key}"
+        assert request.headers.get("x-api-key") == api_key
 
         with update_env(**{"SWARMS_API_KEY": Omit()}):
-            client2 = Swarms(base_url=base_url, api_key=None, _strict_response_validation=True)
+            client2 = SwarmsClient(base_url=base_url, api_key=None, _strict_response_validation=True)
 
         with pytest.raises(
             TypeError,
-            match="Could not resolve authentication method. Expected the api_key to be set. Or for the `Authorization` headers to be explicitly omitted",
+            match="Could not resolve authentication method. Expected the api_key to be set. Or for the `x-api-key` headers to be explicitly omitted",
         ):
             client2._build_request(FinalRequestOptions(method="get", url="/foo"))
 
-        request2 = client2._build_request(
-            FinalRequestOptions(method="get", url="/foo", headers={"Authorization": Omit()})
-        )
-        assert request2.headers.get("Authorization") is None
+        request2 = client2._build_request(FinalRequestOptions(method="get", url="/foo", headers={"x-api-key": Omit()}))
+        assert request2.headers.get("x-api-key") is None
 
     def test_default_query_option(self) -> None:
-        client = Swarms(
+        client = SwarmsClient(
             base_url=base_url, api_key=api_key, _strict_response_validation=True, default_query={"query_param": "bar"}
         )
         request = client._build_request(FinalRequestOptions(method="get", url="/foo"))
@@ -468,7 +468,7 @@ class TestSwarms:
         params = dict(request.url.params)
         assert params == {"foo": "2"}
 
-    def test_multipart_repeating_array(self, client: Swarms) -> None:
+    def test_multipart_repeating_array(self, client: SwarmsClient) -> None:
         request = client._build_request(
             FinalRequestOptions.construct(
                 method="get",
@@ -555,7 +555,9 @@ class TestSwarms:
         assert response.foo == 2
 
     def test_base_url_setter(self) -> None:
-        client = Swarms(base_url="https://example.com/from_init", api_key=api_key, _strict_response_validation=True)
+        client = SwarmsClient(
+            base_url="https://example.com/from_init", api_key=api_key, _strict_response_validation=True
+        )
         assert client.base_url == "https://example.com/from_init/"
 
         client.base_url = "https://example.com/from_setter"  # type: ignore[assignment]
@@ -563,15 +565,17 @@ class TestSwarms:
         assert client.base_url == "https://example.com/from_setter/"
 
     def test_base_url_env(self) -> None:
-        with update_env(SWARMS_BASE_URL="http://localhost:5000/from/env"):
-            client = Swarms(api_key=api_key, _strict_response_validation=True)
+        with update_env(SWARMS_CLIENT_BASE_URL="http://localhost:5000/from/env"):
+            client = SwarmsClient(api_key=api_key, _strict_response_validation=True)
             assert client.base_url == "http://localhost:5000/from/env/"
 
     @pytest.mark.parametrize(
         "client",
         [
-            Swarms(base_url="http://localhost:5000/custom/path/", api_key=api_key, _strict_response_validation=True),
-            Swarms(
+            SwarmsClient(
+                base_url="http://localhost:5000/custom/path/", api_key=api_key, _strict_response_validation=True
+            ),
+            SwarmsClient(
                 base_url="http://localhost:5000/custom/path/",
                 api_key=api_key,
                 _strict_response_validation=True,
@@ -580,7 +584,7 @@ class TestSwarms:
         ],
         ids=["standard", "custom http client"],
     )
-    def test_base_url_trailing_slash(self, client: Swarms) -> None:
+    def test_base_url_trailing_slash(self, client: SwarmsClient) -> None:
         request = client._build_request(
             FinalRequestOptions(
                 method="post",
@@ -593,8 +597,10 @@ class TestSwarms:
     @pytest.mark.parametrize(
         "client",
         [
-            Swarms(base_url="http://localhost:5000/custom/path/", api_key=api_key, _strict_response_validation=True),
-            Swarms(
+            SwarmsClient(
+                base_url="http://localhost:5000/custom/path/", api_key=api_key, _strict_response_validation=True
+            ),
+            SwarmsClient(
                 base_url="http://localhost:5000/custom/path/",
                 api_key=api_key,
                 _strict_response_validation=True,
@@ -603,7 +609,7 @@ class TestSwarms:
         ],
         ids=["standard", "custom http client"],
     )
-    def test_base_url_no_trailing_slash(self, client: Swarms) -> None:
+    def test_base_url_no_trailing_slash(self, client: SwarmsClient) -> None:
         request = client._build_request(
             FinalRequestOptions(
                 method="post",
@@ -616,8 +622,10 @@ class TestSwarms:
     @pytest.mark.parametrize(
         "client",
         [
-            Swarms(base_url="http://localhost:5000/custom/path/", api_key=api_key, _strict_response_validation=True),
-            Swarms(
+            SwarmsClient(
+                base_url="http://localhost:5000/custom/path/", api_key=api_key, _strict_response_validation=True
+            ),
+            SwarmsClient(
                 base_url="http://localhost:5000/custom/path/",
                 api_key=api_key,
                 _strict_response_validation=True,
@@ -626,7 +634,7 @@ class TestSwarms:
         ],
         ids=["standard", "custom http client"],
     )
-    def test_absolute_request_url(self, client: Swarms) -> None:
+    def test_absolute_request_url(self, client: SwarmsClient) -> None:
         request = client._build_request(
             FinalRequestOptions(
                 method="post",
@@ -637,7 +645,7 @@ class TestSwarms:
         assert request.url == "https://myapi.com/foo"
 
     def test_copied_client_does_not_close_http(self) -> None:
-        client = Swarms(base_url=base_url, api_key=api_key, _strict_response_validation=True)
+        client = SwarmsClient(base_url=base_url, api_key=api_key, _strict_response_validation=True)
         assert not client.is_closed()
 
         copied = client.copy()
@@ -648,7 +656,7 @@ class TestSwarms:
         assert not client.is_closed()
 
     def test_client_context_manager(self) -> None:
-        client = Swarms(base_url=base_url, api_key=api_key, _strict_response_validation=True)
+        client = SwarmsClient(base_url=base_url, api_key=api_key, _strict_response_validation=True)
         with client as c2:
             assert c2 is client
             assert not c2.is_closed()
@@ -669,7 +677,9 @@ class TestSwarms:
 
     def test_client_max_retries_validation(self) -> None:
         with pytest.raises(TypeError, match=r"max_retries cannot be None"):
-            Swarms(base_url=base_url, api_key=api_key, _strict_response_validation=True, max_retries=cast(Any, None))
+            SwarmsClient(
+                base_url=base_url, api_key=api_key, _strict_response_validation=True, max_retries=cast(Any, None)
+            )
 
     @pytest.mark.respx(base_url=base_url)
     def test_received_text_for_expected_json(self, respx_mock: MockRouter) -> None:
@@ -678,12 +688,12 @@ class TestSwarms:
 
         respx_mock.get("/foo").mock(return_value=httpx.Response(200, text="my-custom-format"))
 
-        strict_client = Swarms(base_url=base_url, api_key=api_key, _strict_response_validation=True)
+        strict_client = SwarmsClient(base_url=base_url, api_key=api_key, _strict_response_validation=True)
 
         with pytest.raises(APIResponseValidationError):
             strict_client.get("/foo", cast_to=Model)
 
-        client = Swarms(base_url=base_url, api_key=api_key, _strict_response_validation=False)
+        client = SwarmsClient(base_url=base_url, api_key=api_key, _strict_response_validation=False)
 
         response = client.get("/foo", cast_to=Model)
         assert isinstance(response, str)  # type: ignore[unreachable]
@@ -711,7 +721,7 @@ class TestSwarms:
     )
     @mock.patch("time.time", mock.MagicMock(return_value=1696004797))
     def test_parse_retry_after_header(self, remaining_retries: int, retry_after: str, timeout: float) -> None:
-        client = Swarms(base_url=base_url, api_key=api_key, _strict_response_validation=True)
+        client = SwarmsClient(base_url=base_url, api_key=api_key, _strict_response_validation=True)
 
         headers = httpx.Headers({"retry-after": retry_after})
         options = FinalRequestOptions(method="get", url="/foo", max_retries=3)
@@ -720,7 +730,7 @@ class TestSwarms:
 
     @mock.patch("swarms._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
     @pytest.mark.respx(base_url=base_url)
-    def test_retrying_timeout_errors_doesnt_leak(self, respx_mock: MockRouter, client: Swarms) -> None:
+    def test_retrying_timeout_errors_doesnt_leak(self, respx_mock: MockRouter, client: SwarmsClient) -> None:
         respx_mock.get("/").mock(side_effect=httpx.TimeoutException("Test timeout error"))
 
         with pytest.raises(APITimeoutError):
@@ -730,7 +740,7 @@ class TestSwarms:
 
     @mock.patch("swarms._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
     @pytest.mark.respx(base_url=base_url)
-    def test_retrying_status_errors_doesnt_leak(self, respx_mock: MockRouter, client: Swarms) -> None:
+    def test_retrying_status_errors_doesnt_leak(self, respx_mock: MockRouter, client: SwarmsClient) -> None:
         respx_mock.get("/").mock(return_value=httpx.Response(500))
 
         with pytest.raises(APIStatusError):
@@ -743,7 +753,7 @@ class TestSwarms:
     @pytest.mark.parametrize("failure_mode", ["status", "exception"])
     def test_retries_taken(
         self,
-        client: Swarms,
+        client: SwarmsClient,
         failures_before_success: int,
         failure_mode: Literal["status", "exception"],
         respx_mock: MockRouter,
@@ -772,7 +782,7 @@ class TestSwarms:
     @mock.patch("swarms._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
     @pytest.mark.respx(base_url=base_url)
     def test_omit_retry_count_header(
-        self, client: Swarms, failures_before_success: int, respx_mock: MockRouter
+        self, client: SwarmsClient, failures_before_success: int, respx_mock: MockRouter
     ) -> None:
         client = client.with_options(max_retries=4)
 
@@ -795,7 +805,7 @@ class TestSwarms:
     @mock.patch("swarms._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
     @pytest.mark.respx(base_url=base_url)
     def test_overwrite_retry_count_header(
-        self, client: Swarms, failures_before_success: int, respx_mock: MockRouter
+        self, client: SwarmsClient, failures_before_success: int, respx_mock: MockRouter
     ) -> None:
         client = client.with_options(max_retries=4)
 
@@ -864,8 +874,8 @@ class TestSwarms:
         assert exc_info.value.response.headers["Location"] == f"{base_url}/redirected"
 
 
-class TestAsyncSwarms:
-    client = AsyncSwarms(base_url=base_url, api_key=api_key, _strict_response_validation=True)
+class TestAsyncSwarmsClient:
+    client = AsyncSwarmsClient(base_url=base_url, api_key=api_key, _strict_response_validation=True)
 
     @pytest.mark.respx(base_url=base_url)
     @pytest.mark.asyncio
@@ -914,7 +924,7 @@ class TestAsyncSwarms:
         assert isinstance(self.client.timeout, httpx.Timeout)
 
     def test_copy_default_headers(self) -> None:
-        client = AsyncSwarms(
+        client = AsyncSwarmsClient(
             base_url=base_url, api_key=api_key, _strict_response_validation=True, default_headers={"X-Foo": "bar"}
         )
         assert client.default_headers["X-Foo"] == "bar"
@@ -948,7 +958,7 @@ class TestAsyncSwarms:
             client.copy(set_default_headers={}, default_headers={"X-Foo": "Bar"})
 
     def test_copy_default_query(self) -> None:
-        client = AsyncSwarms(
+        client = AsyncSwarmsClient(
             base_url=base_url, api_key=api_key, _strict_response_validation=True, default_query={"foo": "bar"}
         )
         assert _get_params(client)["foo"] == "bar"
@@ -1074,7 +1084,7 @@ class TestAsyncSwarms:
         assert timeout == httpx.Timeout(100.0)
 
     async def test_client_timeout_option(self) -> None:
-        client = AsyncSwarms(
+        client = AsyncSwarmsClient(
             base_url=base_url, api_key=api_key, _strict_response_validation=True, timeout=httpx.Timeout(0)
         )
 
@@ -1085,7 +1095,7 @@ class TestAsyncSwarms:
     async def test_http_client_timeout_option(self) -> None:
         # custom timeout given to the httpx client should be used
         async with httpx.AsyncClient(timeout=None) as http_client:
-            client = AsyncSwarms(
+            client = AsyncSwarmsClient(
                 base_url=base_url, api_key=api_key, _strict_response_validation=True, http_client=http_client
             )
 
@@ -1095,7 +1105,7 @@ class TestAsyncSwarms:
 
         # no timeout given to the httpx client should not use the httpx default
         async with httpx.AsyncClient() as http_client:
-            client = AsyncSwarms(
+            client = AsyncSwarmsClient(
                 base_url=base_url, api_key=api_key, _strict_response_validation=True, http_client=http_client
             )
 
@@ -1105,7 +1115,7 @@ class TestAsyncSwarms:
 
         # explicitly passing the default timeout currently results in it being ignored
         async with httpx.AsyncClient(timeout=HTTPX_DEFAULT_TIMEOUT) as http_client:
-            client = AsyncSwarms(
+            client = AsyncSwarmsClient(
                 base_url=base_url, api_key=api_key, _strict_response_validation=True, http_client=http_client
             )
 
@@ -1116,7 +1126,7 @@ class TestAsyncSwarms:
     def test_invalid_http_client(self) -> None:
         with pytest.raises(TypeError, match="Invalid `http_client` arg"):
             with httpx.Client() as http_client:
-                AsyncSwarms(
+                AsyncSwarmsClient(
                     base_url=base_url,
                     api_key=api_key,
                     _strict_response_validation=True,
@@ -1124,14 +1134,14 @@ class TestAsyncSwarms:
                 )
 
     def test_default_headers_option(self) -> None:
-        client = AsyncSwarms(
+        client = AsyncSwarmsClient(
             base_url=base_url, api_key=api_key, _strict_response_validation=True, default_headers={"X-Foo": "bar"}
         )
         request = client._build_request(FinalRequestOptions(method="get", url="/foo"))
         assert request.headers.get("x-foo") == "bar"
         assert request.headers.get("x-stainless-lang") == "python"
 
-        client2 = AsyncSwarms(
+        client2 = AsyncSwarmsClient(
             base_url=base_url,
             api_key=api_key,
             _strict_response_validation=True,
@@ -1145,26 +1155,24 @@ class TestAsyncSwarms:
         assert request.headers.get("x-stainless-lang") == "my-overriding-header"
 
     def test_validate_headers(self) -> None:
-        client = AsyncSwarms(base_url=base_url, api_key=api_key, _strict_response_validation=True)
+        client = AsyncSwarmsClient(base_url=base_url, api_key=api_key, _strict_response_validation=True)
         request = client._build_request(FinalRequestOptions(method="get", url="/foo"))
-        assert request.headers.get("Authorization") == f"Bearer {api_key}"
+        assert request.headers.get("x-api-key") == api_key
 
         with update_env(**{"SWARMS_API_KEY": Omit()}):
-            client2 = AsyncSwarms(base_url=base_url, api_key=None, _strict_response_validation=True)
+            client2 = AsyncSwarmsClient(base_url=base_url, api_key=None, _strict_response_validation=True)
 
         with pytest.raises(
             TypeError,
-            match="Could not resolve authentication method. Expected the api_key to be set. Or for the `Authorization` headers to be explicitly omitted",
+            match="Could not resolve authentication method. Expected the api_key to be set. Or for the `x-api-key` headers to be explicitly omitted",
         ):
             client2._build_request(FinalRequestOptions(method="get", url="/foo"))
 
-        request2 = client2._build_request(
-            FinalRequestOptions(method="get", url="/foo", headers={"Authorization": Omit()})
-        )
-        assert request2.headers.get("Authorization") is None
+        request2 = client2._build_request(FinalRequestOptions(method="get", url="/foo", headers={"x-api-key": Omit()}))
+        assert request2.headers.get("x-api-key") is None
 
     def test_default_query_option(self) -> None:
-        client = AsyncSwarms(
+        client = AsyncSwarmsClient(
             base_url=base_url, api_key=api_key, _strict_response_validation=True, default_query={"query_param": "bar"}
         )
         request = client._build_request(FinalRequestOptions(method="get", url="/foo"))
@@ -1278,7 +1286,7 @@ class TestAsyncSwarms:
         params = dict(request.url.params)
         assert params == {"foo": "2"}
 
-    def test_multipart_repeating_array(self, async_client: AsyncSwarms) -> None:
+    def test_multipart_repeating_array(self, async_client: AsyncSwarmsClient) -> None:
         request = async_client._build_request(
             FinalRequestOptions.construct(
                 method="get",
@@ -1365,7 +1373,7 @@ class TestAsyncSwarms:
         assert response.foo == 2
 
     def test_base_url_setter(self) -> None:
-        client = AsyncSwarms(
+        client = AsyncSwarmsClient(
             base_url="https://example.com/from_init", api_key=api_key, _strict_response_validation=True
         )
         assert client.base_url == "https://example.com/from_init/"
@@ -1375,17 +1383,17 @@ class TestAsyncSwarms:
         assert client.base_url == "https://example.com/from_setter/"
 
     def test_base_url_env(self) -> None:
-        with update_env(SWARMS_BASE_URL="http://localhost:5000/from/env"):
-            client = AsyncSwarms(api_key=api_key, _strict_response_validation=True)
+        with update_env(SWARMS_CLIENT_BASE_URL="http://localhost:5000/from/env"):
+            client = AsyncSwarmsClient(api_key=api_key, _strict_response_validation=True)
             assert client.base_url == "http://localhost:5000/from/env/"
 
     @pytest.mark.parametrize(
         "client",
         [
-            AsyncSwarms(
+            AsyncSwarmsClient(
                 base_url="http://localhost:5000/custom/path/", api_key=api_key, _strict_response_validation=True
             ),
-            AsyncSwarms(
+            AsyncSwarmsClient(
                 base_url="http://localhost:5000/custom/path/",
                 api_key=api_key,
                 _strict_response_validation=True,
@@ -1394,7 +1402,7 @@ class TestAsyncSwarms:
         ],
         ids=["standard", "custom http client"],
     )
-    def test_base_url_trailing_slash(self, client: AsyncSwarms) -> None:
+    def test_base_url_trailing_slash(self, client: AsyncSwarmsClient) -> None:
         request = client._build_request(
             FinalRequestOptions(
                 method="post",
@@ -1407,10 +1415,10 @@ class TestAsyncSwarms:
     @pytest.mark.parametrize(
         "client",
         [
-            AsyncSwarms(
+            AsyncSwarmsClient(
                 base_url="http://localhost:5000/custom/path/", api_key=api_key, _strict_response_validation=True
             ),
-            AsyncSwarms(
+            AsyncSwarmsClient(
                 base_url="http://localhost:5000/custom/path/",
                 api_key=api_key,
                 _strict_response_validation=True,
@@ -1419,7 +1427,7 @@ class TestAsyncSwarms:
         ],
         ids=["standard", "custom http client"],
     )
-    def test_base_url_no_trailing_slash(self, client: AsyncSwarms) -> None:
+    def test_base_url_no_trailing_slash(self, client: AsyncSwarmsClient) -> None:
         request = client._build_request(
             FinalRequestOptions(
                 method="post",
@@ -1432,10 +1440,10 @@ class TestAsyncSwarms:
     @pytest.mark.parametrize(
         "client",
         [
-            AsyncSwarms(
+            AsyncSwarmsClient(
                 base_url="http://localhost:5000/custom/path/", api_key=api_key, _strict_response_validation=True
             ),
-            AsyncSwarms(
+            AsyncSwarmsClient(
                 base_url="http://localhost:5000/custom/path/",
                 api_key=api_key,
                 _strict_response_validation=True,
@@ -1444,7 +1452,7 @@ class TestAsyncSwarms:
         ],
         ids=["standard", "custom http client"],
     )
-    def test_absolute_request_url(self, client: AsyncSwarms) -> None:
+    def test_absolute_request_url(self, client: AsyncSwarmsClient) -> None:
         request = client._build_request(
             FinalRequestOptions(
                 method="post",
@@ -1455,7 +1463,7 @@ class TestAsyncSwarms:
         assert request.url == "https://myapi.com/foo"
 
     async def test_copied_client_does_not_close_http(self) -> None:
-        client = AsyncSwarms(base_url=base_url, api_key=api_key, _strict_response_validation=True)
+        client = AsyncSwarmsClient(base_url=base_url, api_key=api_key, _strict_response_validation=True)
         assert not client.is_closed()
 
         copied = client.copy()
@@ -1467,7 +1475,7 @@ class TestAsyncSwarms:
         assert not client.is_closed()
 
     async def test_client_context_manager(self) -> None:
-        client = AsyncSwarms(base_url=base_url, api_key=api_key, _strict_response_validation=True)
+        client = AsyncSwarmsClient(base_url=base_url, api_key=api_key, _strict_response_validation=True)
         async with client as c2:
             assert c2 is client
             assert not c2.is_closed()
@@ -1489,7 +1497,7 @@ class TestAsyncSwarms:
 
     async def test_client_max_retries_validation(self) -> None:
         with pytest.raises(TypeError, match=r"max_retries cannot be None"):
-            AsyncSwarms(
+            AsyncSwarmsClient(
                 base_url=base_url, api_key=api_key, _strict_response_validation=True, max_retries=cast(Any, None)
             )
 
@@ -1501,12 +1509,12 @@ class TestAsyncSwarms:
 
         respx_mock.get("/foo").mock(return_value=httpx.Response(200, text="my-custom-format"))
 
-        strict_client = AsyncSwarms(base_url=base_url, api_key=api_key, _strict_response_validation=True)
+        strict_client = AsyncSwarmsClient(base_url=base_url, api_key=api_key, _strict_response_validation=True)
 
         with pytest.raises(APIResponseValidationError):
             await strict_client.get("/foo", cast_to=Model)
 
-        client = AsyncSwarms(base_url=base_url, api_key=api_key, _strict_response_validation=False)
+        client = AsyncSwarmsClient(base_url=base_url, api_key=api_key, _strict_response_validation=False)
 
         response = await client.get("/foo", cast_to=Model)
         assert isinstance(response, str)  # type: ignore[unreachable]
@@ -1535,7 +1543,7 @@ class TestAsyncSwarms:
     @mock.patch("time.time", mock.MagicMock(return_value=1696004797))
     @pytest.mark.asyncio
     async def test_parse_retry_after_header(self, remaining_retries: int, retry_after: str, timeout: float) -> None:
-        client = AsyncSwarms(base_url=base_url, api_key=api_key, _strict_response_validation=True)
+        client = AsyncSwarmsClient(base_url=base_url, api_key=api_key, _strict_response_validation=True)
 
         headers = httpx.Headers({"retry-after": retry_after})
         options = FinalRequestOptions(method="get", url="/foo", max_retries=3)
@@ -1544,7 +1552,9 @@ class TestAsyncSwarms:
 
     @mock.patch("swarms._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
     @pytest.mark.respx(base_url=base_url)
-    async def test_retrying_timeout_errors_doesnt_leak(self, respx_mock: MockRouter, async_client: AsyncSwarms) -> None:
+    async def test_retrying_timeout_errors_doesnt_leak(
+        self, respx_mock: MockRouter, async_client: AsyncSwarmsClient
+    ) -> None:
         respx_mock.get("/").mock(side_effect=httpx.TimeoutException("Test timeout error"))
 
         with pytest.raises(APITimeoutError):
@@ -1554,7 +1564,9 @@ class TestAsyncSwarms:
 
     @mock.patch("swarms._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
     @pytest.mark.respx(base_url=base_url)
-    async def test_retrying_status_errors_doesnt_leak(self, respx_mock: MockRouter, async_client: AsyncSwarms) -> None:
+    async def test_retrying_status_errors_doesnt_leak(
+        self, respx_mock: MockRouter, async_client: AsyncSwarmsClient
+    ) -> None:
         respx_mock.get("/").mock(return_value=httpx.Response(500))
 
         with pytest.raises(APIStatusError):
@@ -1568,7 +1580,7 @@ class TestAsyncSwarms:
     @pytest.mark.parametrize("failure_mode", ["status", "exception"])
     async def test_retries_taken(
         self,
-        async_client: AsyncSwarms,
+        async_client: AsyncSwarmsClient,
         failures_before_success: int,
         failure_mode: Literal["status", "exception"],
         respx_mock: MockRouter,
@@ -1598,7 +1610,7 @@ class TestAsyncSwarms:
     @pytest.mark.respx(base_url=base_url)
     @pytest.mark.asyncio
     async def test_omit_retry_count_header(
-        self, async_client: AsyncSwarms, failures_before_success: int, respx_mock: MockRouter
+        self, async_client: AsyncSwarmsClient, failures_before_success: int, respx_mock: MockRouter
     ) -> None:
         client = async_client.with_options(max_retries=4)
 
@@ -1622,7 +1634,7 @@ class TestAsyncSwarms:
     @pytest.mark.respx(base_url=base_url)
     @pytest.mark.asyncio
     async def test_overwrite_retry_count_header(
-        self, async_client: AsyncSwarms, failures_before_success: int, respx_mock: MockRouter
+        self, async_client: AsyncSwarmsClient, failures_before_success: int, respx_mock: MockRouter
     ) -> None:
         client = async_client.with_options(max_retries=4)
 

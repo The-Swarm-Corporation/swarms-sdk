@@ -3,17 +3,14 @@
 from __future__ import annotations
 
 from typing import Dict, List, Union, Iterable, Optional
-from typing_extensions import Literal, Required, Annotated, TypedDict
+from typing_extensions import Literal, TypedDict
 
-from .._utils import PropertyInfo
 from .agent_spec_param import AgentSpecParam
 
 __all__ = ["SwarmRunParams"]
 
 
 class SwarmRunParams(TypedDict, total=False):
-    x_api_key: Required[Annotated[str, PropertyInfo(alias="x-api-key")]]
-
     agents: Optional[Iterable[AgentSpecParam]]
     """
     A list of agents or specifications that define the agents participating in the

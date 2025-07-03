@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from typing import Iterable
-from typing_extensions import Required, Annotated, TypedDict
+from typing_extensions import Required, TypedDict
 
-from ..._utils import PropertyInfo
 from ..agent_completion_param import AgentCompletionParam
 
 __all__ = ["BatchRunParams"]
@@ -13,5 +12,3 @@ __all__ = ["BatchRunParams"]
 
 class BatchRunParams(TypedDict, total=False):
     body: Required[Iterable[AgentCompletionParam]]
-
-    x_api_key: Required[Annotated[str, PropertyInfo(alias="x-api-key")]]
