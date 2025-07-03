@@ -21,11 +21,11 @@ import pytest
 from respx import MockRouter
 from pydantic import ValidationError
 
-from swarms import SwarmsClient, AsyncSwarmsClient, APIResponseValidationError
-from swarms._types import Omit
-from swarms._models import BaseModel, FinalRequestOptions
-from swarms._exceptions import APIStatusError, APITimeoutError, APIResponseValidationError
-from swarms._base_client import (
+from swarms_client import SwarmsClient, AsyncSwarmsClient, APIResponseValidationError
+from swarms_client._types import Omit
+from swarms_client._models import BaseModel, FinalRequestOptions
+from swarms_client._exceptions import APIStatusError, APITimeoutError, APIResponseValidationError
+from swarms_client._base_client import (
     DEFAULT_TIMEOUT,
     HTTPX_DEFAULT_TIMEOUT,
     BaseClient,
@@ -232,10 +232,10 @@ class TestSwarmsClient:
                         # to_raw_response_wrapper leaks through the @functools.wraps() decorator.
                         #
                         # removing the decorator fixes the leak for reasons we don't understand.
-                        "swarms/_legacy_response.py",
-                        "swarms/_response.py",
+                        "swarms_client/_legacy_response.py",
+                        "swarms_client/_response.py",
                         # pydantic.BaseModel.model_dump || pydantic.BaseModel.dict leak memory for some reason.
-                        "swarms/_compat.py",
+                        "swarms_client/_compat.py",
                         # Standard library leaks we don't care about.
                         "/logging/__init__.py",
                     ]
@@ -728,7 +728,7 @@ class TestSwarmsClient:
         calculated = client._calculate_retry_timeout(remaining_retries, options, headers)
         assert calculated == pytest.approx(timeout, 0.5 * 0.875)  # pyright: ignore[reportUnknownMemberType]
 
-    @mock.patch("swarms._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
+    @mock.patch("swarms_client._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
     @pytest.mark.respx(base_url=base_url)
     def test_retrying_timeout_errors_doesnt_leak(self, respx_mock: MockRouter, client: SwarmsClient) -> None:
         respx_mock.get("/").mock(side_effect=httpx.TimeoutException("Test timeout error"))
@@ -738,7 +738,7 @@ class TestSwarmsClient:
 
         assert _get_open_connections(self.client) == 0
 
-    @mock.patch("swarms._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
+    @mock.patch("swarms_client._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
     @pytest.mark.respx(base_url=base_url)
     def test_retrying_status_errors_doesnt_leak(self, respx_mock: MockRouter, client: SwarmsClient) -> None:
         respx_mock.get("/").mock(return_value=httpx.Response(500))
@@ -748,7 +748,7 @@ class TestSwarmsClient:
         assert _get_open_connections(self.client) == 0
 
     @pytest.mark.parametrize("failures_before_success", [0, 2, 4])
-    @mock.patch("swarms._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
+    @mock.patch("swarms_client._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
     @pytest.mark.respx(base_url=base_url)
     @pytest.mark.parametrize("failure_mode", ["status", "exception"])
     def test_retries_taken(
@@ -779,7 +779,7 @@ class TestSwarmsClient:
         assert int(response.http_request.headers.get("x-stainless-retry-count")) == failures_before_success
 
     @pytest.mark.parametrize("failures_before_success", [0, 2, 4])
-    @mock.patch("swarms._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
+    @mock.patch("swarms_client._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
     @pytest.mark.respx(base_url=base_url)
     def test_omit_retry_count_header(
         self, client: SwarmsClient, failures_before_success: int, respx_mock: MockRouter
@@ -802,7 +802,7 @@ class TestSwarmsClient:
         assert len(response.http_request.headers.get_list("x-stainless-retry-count")) == 0
 
     @pytest.mark.parametrize("failures_before_success", [0, 2, 4])
-    @mock.patch("swarms._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
+    @mock.patch("swarms_client._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
     @pytest.mark.respx(base_url=base_url)
     def test_overwrite_retry_count_header(
         self, client: SwarmsClient, failures_before_success: int, respx_mock: MockRouter
@@ -1050,10 +1050,10 @@ class TestAsyncSwarmsClient:
                         # to_raw_response_wrapper leaks through the @functools.wraps() decorator.
                         #
                         # removing the decorator fixes the leak for reasons we don't understand.
-                        "swarms/_legacy_response.py",
-                        "swarms/_response.py",
+                        "swarms_client/_legacy_response.py",
+                        "swarms_client/_response.py",
                         # pydantic.BaseModel.model_dump || pydantic.BaseModel.dict leak memory for some reason.
-                        "swarms/_compat.py",
+                        "swarms_client/_compat.py",
                         # Standard library leaks we don't care about.
                         "/logging/__init__.py",
                     ]
@@ -1550,7 +1550,7 @@ class TestAsyncSwarmsClient:
         calculated = client._calculate_retry_timeout(remaining_retries, options, headers)
         assert calculated == pytest.approx(timeout, 0.5 * 0.875)  # pyright: ignore[reportUnknownMemberType]
 
-    @mock.patch("swarms._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
+    @mock.patch("swarms_client._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
     @pytest.mark.respx(base_url=base_url)
     async def test_retrying_timeout_errors_doesnt_leak(
         self, respx_mock: MockRouter, async_client: AsyncSwarmsClient
@@ -1562,7 +1562,7 @@ class TestAsyncSwarmsClient:
 
         assert _get_open_connections(self.client) == 0
 
-    @mock.patch("swarms._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
+    @mock.patch("swarms_client._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
     @pytest.mark.respx(base_url=base_url)
     async def test_retrying_status_errors_doesnt_leak(
         self, respx_mock: MockRouter, async_client: AsyncSwarmsClient
@@ -1574,7 +1574,7 @@ class TestAsyncSwarmsClient:
         assert _get_open_connections(self.client) == 0
 
     @pytest.mark.parametrize("failures_before_success", [0, 2, 4])
-    @mock.patch("swarms._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
+    @mock.patch("swarms_client._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
     @pytest.mark.respx(base_url=base_url)
     @pytest.mark.asyncio
     @pytest.mark.parametrize("failure_mode", ["status", "exception"])
@@ -1606,7 +1606,7 @@ class TestAsyncSwarmsClient:
         assert int(response.http_request.headers.get("x-stainless-retry-count")) == failures_before_success
 
     @pytest.mark.parametrize("failures_before_success", [0, 2, 4])
-    @mock.patch("swarms._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
+    @mock.patch("swarms_client._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
     @pytest.mark.respx(base_url=base_url)
     @pytest.mark.asyncio
     async def test_omit_retry_count_header(
@@ -1630,7 +1630,7 @@ class TestAsyncSwarmsClient:
         assert len(response.http_request.headers.get_list("x-stainless-retry-count")) == 0
 
     @pytest.mark.parametrize("failures_before_success", [0, 2, 4])
-    @mock.patch("swarms._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
+    @mock.patch("swarms_client._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
     @pytest.mark.respx(base_url=base_url)
     @pytest.mark.asyncio
     async def test_overwrite_retry_count_header(
@@ -1664,8 +1664,8 @@ class TestAsyncSwarmsClient:
         import nest_asyncio
         import threading
 
-        from swarms._utils import asyncify
-        from swarms._base_client import get_platform
+        from swarms_client._utils import asyncify
+        from swarms_client._base_client import get_platform
 
         async def test_main() -> None:
             result = await asyncify(get_platform)()

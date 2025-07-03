@@ -7,9 +7,9 @@ import pytest
 import pydantic
 from pydantic import Field
 
-from swarms._utils import PropertyInfo
-from swarms._compat import PYDANTIC_V2, parse_obj, model_dump, model_json
-from swarms._models import BaseModel, construct_type
+from swarms_client._utils import PropertyInfo
+from swarms_client._compat import PYDANTIC_V2, parse_obj, model_dump, model_json
+from swarms_client._models import BaseModel, construct_type
 
 
 class BasicModel(BaseModel):

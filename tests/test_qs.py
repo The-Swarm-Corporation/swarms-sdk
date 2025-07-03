@@ -4,7 +4,7 @@ from urllib.parse import unquote
 
 import pytest
 
-from swarms._qs import Querystring, stringify
+from swarms_client._qs import Querystring, stringify
 
 
 def test_empty() -> None:
