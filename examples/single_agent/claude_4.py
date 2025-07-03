@@ -8,12 +8,12 @@ async def main():
         response = await client.agent.acreate(
             agent_config={
                 "agent_name": "Writer",
-                "model_name": "claude-3-7-sonnet-latest",
+                "model_name": "claude-opus-4-20250514",
                 "description": "A writer agent that writes short stories about an AI and human friendship",
                 "system_prompt": "You are a writer agent that writes short stories about an AI and human friendship",
                 "role": "writer",
                 "max_loops": 1,
-                "temperature": 0.7,
+                "temperature": 0.4,
             },
             task="Write a short story about an AI and human friendship",
         )

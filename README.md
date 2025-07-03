@@ -29,7 +29,7 @@ First, obtain your API key from the [Swarms Platform](https://swarms.world/platf
 ### 2. Installation
 
 ```bash
-pip install swarms-client
+pip install -U swarms-client
 ```
 
 ## API Resources

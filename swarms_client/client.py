@@ -1,1289 +1,268 @@
-import asyncio
-import os
-import json
-import time
-from typing import (
-    Dict,
-    List,
-    Optional,
-    Union,
-    Any,
-    Literal,
-    Type,
-    TypeVar,
-    cast,
-    Callable,
-)
-from urllib.parse import urljoin
-from functools import wraps
+import ssl
+from typing import Any, Optional, Union
 
-import aiohttp
-import requests
-from dotenv import load_dotenv
-from pydantic import BaseModel, field_validator, ConfigDict
-from pydantic.v1 import root_validator
-from loguru import logger
-from pydantic import Field
+import httpx
+from attrs import define, evolve, field
 
-# ===== Type definitions =====
-T = TypeVar("T")
-ModelNameType = str
-AgentNameType = str
-SwarmTypeType = Literal[
-    "AgentRearrange",
-    "MixtureOfAgents",
-    "SpreadSheetSwarm",
-    "SequentialWorkflow",
-    "ConcurrentWorkflow",
-    "GroupChat",
-    "MultiAgentRouter",
-    "AutoSwarmBuilder",
-    "HiearchicalSwarm",
-    "auto",
-    "MajorityVoting",
-    "MALT",
-    "DeepResearchSwarm",
-]
 
-# ===== Models =====
+@define
+class Client:
+    """A class for keeping track of data related to the API
 
+    The following are accepted as keyword arguments and will be used to construct httpx Clients internally:
 
-class SwarmsObject(BaseModel):
-    """Base class for Swarms API objects"""
+        ``base_url``: The base URL for the API, all requests are made to a relative path to this URL
 
-    model_config = ConfigDict(
-        extra="allow",
-        arbitrary_types_allowed=True,
-        populate_by_name=True,
-    )
+        ``cookies``: A dictionary of cookies to be sent with every request
 
+        ``headers``: A dictionary of headers to be sent with every request
 
-class AgentTool(SwarmsObject):
-    """Tool configuration for an agent"""
+        ``timeout``: The maximum amount of a time a request can take. API functions will raise
+        httpx.TimeoutException if this is exceeded.
 
-    type: str
-    function: Dict[str, Any]
+        ``verify_ssl``: Whether or not to verify the SSL certificate of the API server. This should be True in production,
+        but can be set to False for testing purposes.
 
+        ``follow_redirects``: Whether or not to follow redirects. Default value is False.
 
-class AgentSpec(BaseModel):
-    agent_name: Optional[str] = Field(
-        # default=None,
-        description="The unique name assigned to the agent, which identifies its role and functionality within the swarm.",
-    )
-    description: Optional[str] = Field(
-        default=None,
-        description="A detailed explanation of the agent's purpose, capabilities, and any specific tasks it is designed to perform.",
-    )
-    system_prompt: Optional[str] = Field(
-        default=None,
-        description="The initial instruction or context provided to the agent, guiding its behavior and responses during execution.",
-    )
-    model_name: Optional[str] = Field(
-        default="gpt-4o-mini",
-        description="The name of the AI model that the agent will utilize for processing tasks and generating outputs. For example: gpt-4o, gpt-4o-mini, openai/o3-mini",
-    )
-    auto_generate_prompt: Optional[bool] = Field(
-        default=False,
-        description="A flag indicating whether the agent should automatically create prompts based on the task requirements.",
-    )
-    max_tokens: Optional[int] = Field(
-        default=8192,
-        description="The maximum number of tokens that the agent is allowed to generate in its responses, limiting output length.",
-    )
-    temperature: Optional[float] = Field(
-        default=0.5,
-        description="A parameter that controls the randomness of the agent's output; lower values result in more deterministic responses.",
-    )
-    role: Optional[str] = Field(
-        default="worker",
-        description="The designated role of the agent within the swarm, which influences its behavior and interaction with other agents.",
-    )
-    max_loops: Optional[int] = Field(
-        default=1,
-        description="The maximum number of times the agent is allowed to repeat its task, enabling iterative processing if necessary.",
-    )
-    tools_dictionary: Optional[List[Dict[str, Any]]] = Field(
-        default=None,
-        description="A dictionary of tools that the agent can use to complete its task.",
-    )
-    mcp_url: Optional[str] = Field(
-        default=None,
-        description="The URL of the MCP server that the agent can use to complete its task.",
-    )
+        ``httpx_args``: A dictionary of additional arguments to be passed to the ``httpx.Client`` and ``httpx.AsyncClient`` constructor.
 
-    @field_validator("temperature")
-    def validate_temperature(cls, v):
-        if not 0 <= v <= 1:
-            raise ValueError("Temperature must be between 0 and 1")
-        return v
 
-
-class AgentCompletion(SwarmsObject):
-    """Agent completion request"""
-
-    agent_config: AgentSpec
-    task: str
-    history: Optional[Dict[str, Any]] = None
-
-
-class ScheduleSpec(SwarmsObject):
-    """Schedule specification for swarm execution"""
-
-    scheduled_time: str  # ISO formatted datetime
-    timezone: str = "UTC"
-
-
-class SwarmSpec(SwarmsObject):
-    """Configuration for a swarm"""
-
-    name: Optional[str] = None
-    description: Optional[str] = None
-    agents: Optional[List[AgentSpec]] = None
-    max_loops: int = 1
-    swarm_type: Optional[SwarmTypeType] = None
-    rearrange_flow: Optional[str] = None
-    task: Optional[str] = None
-    img: Optional[str] = None
-    return_history: bool = True
-    rules: Optional[str] = None
-    schedule: Optional[ScheduleSpec] = None
-    tasks: Optional[List[str]] = None
-    messages: Optional[List[Dict[str, Any]]] = None
-    stream: bool = False
-    service_tier: str = "standard"
-
-    class Config:
-        arbitrary_types_allowed = True
-
-    @root_validator
-    def validate_task_or_tasks(cls, values):
-        if not any([values.get("task"), values.get("tasks"), values.get("messages")]):
-            raise ValueError("Either task, tasks, or messages must be provided")
-        return values
-
-
-# ===== API Response Models =====
-
-
-class Usage(SwarmsObject):
-    """Token usage information"""
-
-    input_tokens: Optional[int] = None
-    output_tokens: Optional[int] = None
-    total_tokens: Optional[int] = None
-
-
-class AgentCompletionResponse(SwarmsObject):
-    """Response from an agent completion request"""
-
-    id: Optional[str] = None
-    success: Optional[bool] = None
-    name: Optional[str] = None
-    description: Optional[str] = None
-    temperature: Optional[float] = None
-    outputs: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None
-    usage: Optional[Usage] = None
-    timestamp: Optional[str] = None
-
-    class Config:
-        arbitrary_types_allowed = True
-
-
-class BatchAgentCompletionResponse(SwarmsObject):
-    """Response from a batch agent completion request"""
-
-    batch_id: Optional[str] = None
-    total_requests: Optional[int] = None
-    execution_time: Optional[float] = None
-    timestamp: Optional[str] = None
-    results: Optional[List[AgentCompletionResponse]] = None
-
-
-class SwarmCompletionResponse(SwarmsObject):
-    """Response from a swarm completion request"""
-
-    job_id: str
-    status: str
-    swarm_name: Optional[str] = None
-    description: Optional[str] = None
-    swarm_type: Optional[SwarmTypeType] = None
-    output: Dict[str, Any]
-    number_of_agents: int
-    service_tier: str
-    tasks: Optional[List[str]] = None
-    messages: Optional[List[Dict[str, Any]]] = None
-
-
-class LogEntry(SwarmsObject):
-    """API request log entry"""
-
-    id: Optional[str] = None
-    api_key: str
-    data: Dict[str, Any]
-    created_at: Optional[str] = None
-
-
-class LogsResponse(SwarmsObject):
-    """Response from a logs request"""
-
-    status: str
-    count: int
-    logs: List[LogEntry]
-    timestamp: str
-
-
-class SwarmTypesResponse(SwarmsObject):
-    """Response from a swarm types request"""
-
-    success: bool
-    swarm_types: List[SwarmTypeType]
-
-
-class ModelsResponse(SwarmsObject):
-    """Response from a models request"""
-
-    success: bool
-    models: List[str]
-
-
-# ===== Exceptions =====
-
-
-class SwarmsError(Exception):
-    """Base exception for all Swarms API errors"""
-
-    def __init__(self, message=None, http_status=None, request_id=None, body=None):
-        self.message = message
-        self.http_status = http_status
-        self.request_id = request_id
-        self.body = body
-        super().__init__(self.message)
-
-    def __str__(self):
-        msg = self.message or "Unknown error"
-        if self.http_status:
-            msg = f"[{self.http_status}] {msg}"
-        if self.request_id:
-            msg = f"{msg} (Request ID: {self.request_id})"
-        return msg
-
-
-class AuthenticationError(SwarmsError):
-    """Raised when there's an issue with authentication"""
-
-    pass
-
-
-class RateLimitError(SwarmsError):
-    """Raised when the rate limit is exceeded"""
-
-    pass
-
-
-class APIError(SwarmsError):
-    """Raised when the API returns an error"""
-
-    pass
-
-
-class InvalidRequestError(SwarmsError):
-    """Raised when the request is invalid"""
-
-    pass
-
-
-class InsufficientCreditsError(SwarmsError):
-    """Raised when the user doesn't have enough credits"""
-
-    pass
-
-
-class TimeoutError(SwarmsError):
-    """Raised when a request times out"""
-
-    pass
-
-
-class NetworkError(SwarmsError):
-    """Raised when there's a network issue"""
-
-    pass
-
-
-# ===== Utilities =====
-
-
-def _handle_error_response(response, body):
-    """Process an error response and raise the appropriate exception"""
-    request_id = response.headers.get("x-request-id")
-
-    if response.status_code == 401 or response.status_code == 403:
-        raise AuthenticationError(
-            message=body.get("detail", "Authentication error"),
-            http_status=response.status_code,
-            request_id=request_id,
-            body=body,
-        )
-    elif response.status_code == 429:
-        raise RateLimitError(
-            message=body.get("detail", "Rate limit exceeded"),
-            http_status=response.status_code,
-            request_id=request_id,
-            body=body,
-        )
-    elif response.status_code == 400:
-        raise InvalidRequestError(
-            message=body.get("detail", "Invalid request"),
-            http_status=response.status_code,
-            request_id=request_id,
-            body=body,
-        )
-    elif response.status_code == 402:
-        raise InsufficientCreditsError(
-            message=body.get("detail", "Insufficient credits"),
-            http_status=response.status_code,
-            request_id=request_id,
-            body=body,
-        )
-    else:
-        raise APIError(
-            message=body.get("detail", f"API error: {response.status_code}"),
-            http_status=response.status_code,
-            request_id=request_id,
-            body=body,
-        )
-
-
-async def _handle_async_error_response(response, body):
-    """Process an error response asynchronously and raise the appropriate exception"""
-    request_id = response.headers.get("x-request-id")
-
-    if response.status == 401 or response.status == 403:
-        raise AuthenticationError(
-            message=body.get("detail", "Authentication error"),
-            http_status=response.status,
-            request_id=request_id,
-            body=body,
-        )
-    elif response.status == 429:
-        raise RateLimitError(
-            message=body.get("detail", "Rate limit exceeded"),
-            http_status=response.status,
-            request_id=request_id,
-            body=body,
-        )
-    elif response.status == 400:
-        raise InvalidRequestError(
-            message=body.get("detail", "Invalid request"),
-            http_status=response.status,
-            request_id=request_id,
-            body=body,
-        )
-    elif response.status == 402:
-        raise InsufficientCreditsError(
-            message=body.get("detail", "Insufficient credits"),
-            http_status=response.status,
-            request_id=request_id,
-            body=body,
-        )
-    else:
-        raise APIError(
-            message=body.get("detail", f"API error: {response.status}"),
-            http_status=response.status,
-            request_id=request_id,
-            body=body,
-        )
-
-
-def _parse_response(response_class: Type[T], data: Dict[str, Any]) -> T:
-    """Parse API response into the appropriate model"""
-    try:
-        return response_class.model_validate(data)
-    except Exception as e:
-        logger.error(f"Error parsing response: {e}")
-        # Return raw data if parsing fails
-        return cast(T, data)
-
-
-# ===== Swarms API Client =====
-
-
-class Cache:
-    """Simple in-memory cache with TTL support"""
-
-    def __init__(self):
-        self._cache = {}
-
-    def get(self, key: str) -> Optional[Any]:
-        if key in self._cache:
-            value, expiry = self._cache[key]
-            if expiry > time.time():
-                return value
-            del self._cache[key]
-        return None
-
-    def set(self, key: str, value: Any, ttl: int = 300):
-        self._cache[key] = (value, time.time() + ttl)
-
-    def clear(self):
-        self._cache.clear()
-
-
-def cached(ttl: int = 300):
-    """Decorator for caching method results"""
-
-    def decorator(func: Callable):
-        @wraps(func)
-        async def async_wrapper(self, *args, **kwargs):
-            if not hasattr(self.client, "_cache"):
-                self.client._cache = Cache()
-
-            # Create cache key from method name and arguments
-            cache_key = f"{func.__name__}:{str(args)}:{str(kwargs)}"
-            result = self.client._cache.get(cache_key)
-
-            if result is not None:
-                return result
-
-            result = await func(self, *args, **kwargs)
-            self.client._cache.set(cache_key, result, ttl)
-            return result
-
-        @wraps(func)
-        def sync_wrapper(self, *args, **kwargs):
-            if not hasattr(self.client, "_cache"):
-                self.client._cache = Cache()
-
-            # Create cache key from method name and arguments
-            cache_key = f"{func.__name__}:{str(args)}:{str(kwargs)}"
-            result = self.client._cache.get(cache_key)
-
-            if result is not None:
-                return result
-
-            result = func(self, *args, **kwargs)
-            self.client._cache.set(cache_key, result, ttl)
-            return result
-
-        return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
-
-    return decorator
-
-
-class CircuitBreaker:
-    """Circuit breaker implementation for API requests"""
-
-    def __init__(self, failure_threshold: int = 5, reset_timeout: int = 60):
-        self.failure_threshold = failure_threshold
-        self.reset_timeout = reset_timeout
-        self.failures = 0
-        self.last_failure_time = 0
-        self.state = "closed"  # closed, open, half-open
-        self._lock = asyncio.Lock()
-
-    async def __aenter__(self):
-        async with self._lock:
-            current_time = time.time()
-            if self.state == "open":
-                if current_time - self.last_failure_time > self.reset_timeout:
-                    self.state = "half-open"
-                else:
-                    raise APIError("Circuit breaker is open")
-            return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is not None:
-            await self.record_failure()
-        else:
-            await self.record_success()
-
-    async def record_failure(self):
-        async with self._lock:
-            self.failures += 1
-            self.last_failure_time = time.time()
-            if self.failures >= self.failure_threshold:
-                self.state = "open"
-
-    async def record_success(self):
-        async with self._lock:
-            if self.state == "half-open":
-                self.state = "closed"
-            self.failures = 0
-
-
-class SwarmsClient:
-    """
-    Client for the Swarms API with both synchronous and asynchronous interfaces.
-    Includes connection pooling and advanced session management.
-
-    Example usage:
-        ```python
-        from swarms import Swarms
-
-        # Initialize the client
-        client = Swarms(api_key="your-api-key")
-
-        # Make a swarm completion request
-        response = client.swarm.create(
-            name="My Swarm",
-            swarm_type="auto",
-            task="Analyze the pros and cons of quantum computing",
-            agents=[
-                {
-                    "agent_name": "Researcher",
-                    "description": "Conducts in-depth research",
-                    "model_name": "gpt-4o"
-                },
-                {
-                    "agent_name": "Critic",
-                    "description": "Evaluates arguments for flaws",
-                    "model_name": "gpt-4o-mini"
-                }
-            ]
-        )
-
-        # Print the output
-        print(response.output)
-        ```
+    Attributes:
+        raise_on_unexpected_status: Whether or not to raise an errors.UnexpectedStatus if the API returns a
+            status code that was not documented in the source OpenAPI document. Can also be provided as a keyword
+            argument to the constructor.
     """
 
-    def __init__(
-        self,
-        api_key: Optional[str] = os.getenv("SWARMS_API_KEY"),
-        base_url: Optional[str] = "https://swarms-api-285321057562.us-east1.run.app",
-        timeout: int = 60,
-        max_retries: int = 3,
-        retry_delay: int = 1,
-        log_level: str = "INFO",
-        pool_connections: int = 100,
-        pool_maxsize: int = 100,
-        keep_alive_timeout: int = 5,
-        max_concurrent_requests: int = 100,
-        circuit_breaker_threshold: int = 5,
-        circuit_breaker_timeout: int = 60,
-        enable_cache: bool = True,
-    ):
+    raise_on_unexpected_status: bool = field(default=False, kw_only=True)
+    _base_url: str = field(alias="base_url")
+    _cookies: dict[str, str] = field(factory=dict, kw_only=True, alias="cookies")
+    _headers: dict[str, str] = field(factory=dict, kw_only=True, alias="headers")
+    _timeout: Optional[httpx.Timeout] = field(default=None, kw_only=True, alias="timeout")
+    _verify_ssl: Union[str, bool, ssl.SSLContext] = field(default=True, kw_only=True, alias="verify_ssl")
+    _follow_redirects: bool = field(default=False, kw_only=True, alias="follow_redirects")
+    _httpx_args: dict[str, Any] = field(factory=dict, kw_only=True, alias="httpx_args")
+    _client: Optional[httpx.Client] = field(default=None, init=False)
+    _async_client: Optional[httpx.AsyncClient] = field(default=None, init=False)
+
+    def with_headers(self, headers: dict[str, str]) -> "Client":
+        """Get a new client matching this one with additional headers"""
+        if self._client is not None:
+            self._client.headers.update(headers)
+        if self._async_client is not None:
+            self._async_client.headers.update(headers)
+        return evolve(self, headers={**self._headers, **headers})
+
+    def with_cookies(self, cookies: dict[str, str]) -> "Client":
+        """Get a new client matching this one with additional cookies"""
+        if self._client is not None:
+            self._client.cookies.update(cookies)
+        if self._async_client is not None:
+            self._async_client.cookies.update(cookies)
+        return evolve(self, cookies={**self._cookies, **cookies})
+
+    def with_timeout(self, timeout: httpx.Timeout) -> "Client":
+        """Get a new client matching this one with a new timeout (in seconds)"""
+        if self._client is not None:
+            self._client.timeout = timeout
+        if self._async_client is not None:
+            self._async_client.timeout = timeout
+        return evolve(self, timeout=timeout)
+
+    def set_httpx_client(self, client: httpx.Client) -> "Client":
+        """Manually set the underlying httpx.Client
+
+        **NOTE**: This will override any other settings on the client, including cookies, headers, and timeout.
         """
-        Initialize the Swarms API client.
-
-        Args:
-            api_key: API key for authentication. If not provided, it will be loaded from
-                    the SWARMS_API_KEY environment variable.
-            base_url: Base URL for the API. If not provided, it will be loaded from
-                     the SWARMS_API_BASE_URL environment variable or default to the production URL.
-            timeout: Timeout for API requests in seconds.
-            max_retries: Maximum number of retry attempts for failed requests.
-            retry_delay: Initial delay between retries in seconds (uses exponential backoff).
-            log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL).
-            pool_connections: Number of connection pools to cache
-            pool_maxsize: Maximum number of connections to save in the pool
-            keep_alive_timeout: Keep-alive timeout for connections in seconds
-            max_concurrent_requests: Maximum number of concurrent requests
-            circuit_breaker_threshold: Failure threshold for the circuit breaker
-            circuit_breaker_timeout: Reset timeout for the circuit breaker
-            enable_cache: Whether to enable in-memory caching
-        """
-        # Load environment variables
-        load_dotenv()
-
-        # Set API key
-        self.api_key = api_key or os.getenv("SWARMS_API_KEY")
-        if not self.api_key:
-            logger.warning(
-                "No API key provided. Please set the SWARMS_API_KEY environment variable or pass it explicitly."
-            )
-
-        # Set base URL
-        self.base_url = base_url or os.getenv(
-            "SWARMS_API_BASE_URL", "https://swarms-api-285321057562.us-east1.run.app"
-        )
-
-        # Ensure base_url ends with a slash
-        if not self.base_url.endswith("/"):
-            self.base_url += "/"
-
-        # Set other parameters
-        self.timeout = timeout
-        self.max_retries = max_retries
-        self.retry_delay = retry_delay
-        self.pool_connections = pool_connections
-        self.pool_maxsize = pool_maxsize
-        self.keep_alive_timeout = keep_alive_timeout
-        self.max_concurrent_requests = max_concurrent_requests
-
-        # Set up connection pooling for synchronous requests
-        self.session = requests.Session()
-        adapter = requests.adapters.HTTPAdapter(
-            pool_connections=self.pool_connections,
-            pool_maxsize=self.pool_maxsize,
-            max_retries=self.max_retries,
-            pool_block=True,
-        )
-        self.session.mount("http://", adapter)
-        self.session.mount("https://", adapter)
-
-        # Set up semaphore for limiting concurrent requests
-        self._request_semaphore = asyncio.Semaphore(self.max_concurrent_requests)
-
-        # Set up logging
-        logger.remove()
-        logger.add(
-            lambda msg: print(msg, end=""),
-            colorize=True,
-            level=log_level,
-            format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
-        )
-
-        # Create aiohttp session with TCP connector configuration
-        self._session = None
-
-        # Initialize API resources
-        self.agent = AgentResource(self)
-        self.swarm = SwarmResource(self)
-        self.models = ModelsResource(self)
-        self.logs = LogsResource(self)
-
-        # Initialize circuit breaker
-        self.circuit_breaker = CircuitBreaker(
-            failure_threshold=circuit_breaker_threshold,
-            reset_timeout=circuit_breaker_timeout,
-        )
-
-        # Initialize cache if enabled
-        self._cache = Cache() if enable_cache else None
-
-    def __enter__(self):
+        self._client = client
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.session.close()
-
-    async def __aenter__(self):
-        if self._session is None:
-            # Configure TCP connector with connection pooling
-            connector = aiohttp.TCPConnector(
-                limit=self.pool_maxsize,
-                limit_per_host=self.pool_connections,
-                enable_cleanup_closed=True,
-                keepalive_timeout=self.keep_alive_timeout,
+    def get_httpx_client(self) -> httpx.Client:
+        """Get the underlying httpx.Client, constructing a new one if not previously set"""
+        if self._client is None:
+            self._client = httpx.Client(
+                base_url=self._base_url,
+                cookies=self._cookies,
+                headers=self._headers,
+                timeout=self._timeout,
+                verify=self._verify_ssl,
+                follow_redirects=self._follow_redirects,
+                **self._httpx_args,
             )
-            self._session = aiohttp.ClientSession(connector=connector)
+        return self._client
+
+    def __enter__(self) -> "Client":
+        """Enter a context manager for self.client—you cannot enter twice (see httpx docs)"""
+        self.get_httpx_client().__enter__()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        if self._session:
-            await self._session.close()
-            self._session = None
+    def __exit__(self, *args: Any, **kwargs: Any) -> None:
+        """Exit a context manager for internal httpx.Client (see httpx docs)"""
+        self.get_httpx_client().__exit__(*args, **kwargs)
 
-    def _make_request(
-        self,
-        method: str,
-        endpoint: str,
-        params: Optional[Dict[str, Any]] = None,
-        data: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, Any]] = None,
-        retries_left: Optional[int] = None,
-    ):
+    def set_async_httpx_client(self, async_client: httpx.AsyncClient) -> "Client":
+        """Manually the underlying httpx.AsyncClient
+
+        **NOTE**: This will override any other settings on the client, including cookies, headers, and timeout.
         """
-        Make a synchronous HTTP request to the API.
+        self._async_client = async_client
+        return self
 
-        Args:
-            method: HTTP method (GET, POST, PUT, DELETE)
-            endpoint: API endpoint (relative to base_url)
-            params: Query parameters
-            data: Request body data
-            headers: Additional headers
-            retries_left: Number of retries left
-
-        Returns:
-            Response data as a dictionary
-        """
-        url = urljoin(self.base_url, endpoint)
-
-        if retries_left is None:
-            retries_left = self.max_retries
-
-        # Set up headers
-        request_headers = {
-            "Content-Type": "application/json",
-            "x-api-key": self.api_key,
-        }
-        if headers:
-            request_headers.update(headers)
-
-        try:
-            logger.debug(f"{method} {url}")
-            if data:
-                logger.debug(f"Request data: {json.dumps(data, indent=2)}")
-
-            response = requests.request(
-                method=method,
-                url=url,
-                params=params,
-                json=data,
-                headers=request_headers,
-                timeout=self.timeout,
+    def get_async_httpx_client(self) -> httpx.AsyncClient:
+        """Get the underlying httpx.AsyncClient, constructing a new one if not previously set"""
+        if self._async_client is None:
+            self._async_client = httpx.AsyncClient(
+                base_url=self._base_url,
+                cookies=self._cookies,
+                headers=self._headers,
+                timeout=self._timeout,
+                verify=self._verify_ssl,
+                follow_redirects=self._follow_redirects,
+                **self._httpx_args,
             )
+        return self._async_client
 
-            # Try to parse JSON response
-            try:
-                body = response.json()
-            except ValueError:
-                body = {"detail": response.text}
+    async def __aenter__(self) -> "Client":
+        """Enter a context manager for underlying httpx.AsyncClient—you cannot enter twice (see httpx docs)"""
+        await self.get_async_httpx_client().__aenter__()
+        return self
 
-            # Handle error responses
-            if not response.ok:
-                _handle_error_response(response, body)
+    async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
+        """Exit a context manager for underlying httpx.AsyncClient (see httpx docs)"""
+        await self.get_async_httpx_client().__aexit__(*args, **kwargs)
 
-            logger.debug(
-                f"Response: {json.dumps(body, indent=2) if isinstance(body, dict) else body}"
+
+@define
+class AuthenticatedClient:
+    """A Client which has been authenticated for use on secured endpoints
+
+    The following are accepted as keyword arguments and will be used to construct httpx Clients internally:
+
+        ``base_url``: The base URL for the API, all requests are made to a relative path to this URL
+
+        ``cookies``: A dictionary of cookies to be sent with every request
+
+        ``headers``: A dictionary of headers to be sent with every request
+
+        ``timeout``: The maximum amount of a time a request can take. API functions will raise
+        httpx.TimeoutException if this is exceeded.
+
+        ``verify_ssl``: Whether or not to verify the SSL certificate of the API server. This should be True in production,
+        but can be set to False for testing purposes.
+
+        ``follow_redirects``: Whether or not to follow redirects. Default value is False.
+
+        ``httpx_args``: A dictionary of additional arguments to be passed to the ``httpx.Client`` and ``httpx.AsyncClient`` constructor.
+
+
+    Attributes:
+        raise_on_unexpected_status: Whether or not to raise an errors.UnexpectedStatus if the API returns a
+            status code that was not documented in the source OpenAPI document. Can also be provided as a keyword
+            argument to the constructor.
+        token: The token to use for authentication
+        prefix: The prefix to use for the Authorization header
+        auth_header_name: The name of the Authorization header
+    """
+
+    raise_on_unexpected_status: bool = field(default=False, kw_only=True)
+    _base_url: str = field(alias="base_url")
+    _cookies: dict[str, str] = field(factory=dict, kw_only=True, alias="cookies")
+    _headers: dict[str, str] = field(factory=dict, kw_only=True, alias="headers")
+    _timeout: Optional[httpx.Timeout] = field(default=None, kw_only=True, alias="timeout")
+    _verify_ssl: Union[str, bool, ssl.SSLContext] = field(default=True, kw_only=True, alias="verify_ssl")
+    _follow_redirects: bool = field(default=False, kw_only=True, alias="follow_redirects")
+    _httpx_args: dict[str, Any] = field(factory=dict, kw_only=True, alias="httpx_args")
+    _client: Optional[httpx.Client] = field(default=None, init=False)
+    _async_client: Optional[httpx.AsyncClient] = field(default=None, init=False)
+
+    token: str
+    prefix: str = "Bearer"
+    auth_header_name: str = "Authorization"
+
+    def with_headers(self, headers: dict[str, str]) -> "AuthenticatedClient":
+        """Get a new client matching this one with additional headers"""
+        if self._client is not None:
+            self._client.headers.update(headers)
+        if self._async_client is not None:
+            self._async_client.headers.update(headers)
+        return evolve(self, headers={**self._headers, **headers})
+
+    def with_cookies(self, cookies: dict[str, str]) -> "AuthenticatedClient":
+        """Get a new client matching this one with additional cookies"""
+        if self._client is not None:
+            self._client.cookies.update(cookies)
+        if self._async_client is not None:
+            self._async_client.cookies.update(cookies)
+        return evolve(self, cookies={**self._cookies, **cookies})
+
+    def with_timeout(self, timeout: httpx.Timeout) -> "AuthenticatedClient":
+        """Get a new client matching this one with a new timeout (in seconds)"""
+        if self._client is not None:
+            self._client.timeout = timeout
+        if self._async_client is not None:
+            self._async_client.timeout = timeout
+        return evolve(self, timeout=timeout)
+
+    def set_httpx_client(self, client: httpx.Client) -> "AuthenticatedClient":
+        """Manually set the underlying httpx.Client
+
+        **NOTE**: This will override any other settings on the client, including cookies, headers, and timeout.
+        """
+        self._client = client
+        return self
+
+    def get_httpx_client(self) -> httpx.Client:
+        """Get the underlying httpx.Client, constructing a new one if not previously set"""
+        if self._client is None:
+            self._headers[self.auth_header_name] = f"{self.prefix} {self.token}" if self.prefix else self.token
+            self._client = httpx.Client(
+                base_url=self._base_url,
+                cookies=self._cookies,
+                headers=self._headers,
+                timeout=self._timeout,
+                verify=self._verify_ssl,
+                follow_redirects=self._follow_redirects,
+                **self._httpx_args,
             )
-            return body
+        return self._client
 
-        except (requests.Timeout, requests.ConnectionError) as e:
-            # Retry on network errors with exponential backoff
-            if retries_left > 0:
-                delay = self.retry_delay * (2 ** (self.max_retries - retries_left))
-                logger.warning(
-                    f"Request failed: {str(e)}. Retrying in {delay} seconds..."
-                )
-                time.sleep(delay)
-                return self._make_request(
-                    method, endpoint, params, data, headers, retries_left - 1
-                )
+    def __enter__(self) -> "AuthenticatedClient":
+        """Enter a context manager for self.client—you cannot enter twice (see httpx docs)"""
+        self.get_httpx_client().__enter__()
+        return self
 
-            if isinstance(e, requests.Timeout):
-                raise TimeoutError(
-                    message=f"Request timed out after {self.timeout} seconds",
-                    http_status=None,
-                ) from e
-            else:
-                raise NetworkError(
-                    message=f"Network error: {str(e)}", http_status=None
-                ) from e
+    def __exit__(self, *args: Any, **kwargs: Any) -> None:
+        """Exit a context manager for internal httpx.Client (see httpx docs)"""
+        self.get_httpx_client().__exit__(*args, **kwargs)
 
-        except SwarmsError:
-            # Re-raise Swarms errors
-            raise
+    def set_async_httpx_client(self, async_client: httpx.AsyncClient) -> "AuthenticatedClient":
+        """Manually the underlying httpx.AsyncClient
 
-        except Exception as e:
-            # Catch-all for unexpected errors
-            logger.error(f"Unexpected error: {str(e)}")
-            raise APIError(
-                message=f"Unexpected error: {str(e)}", http_status=None
-            ) from e
-
-    async def _make_async_request(
-        self,
-        method: str,
-        endpoint: str,
-        params: Optional[Dict[str, Any]] = None,
-        data: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, Any]] = None,
-        retries_left: Optional[int] = None,
-    ):
+        **NOTE**: This will override any other settings on the client, including cookies, headers, and timeout.
         """
-        Make an asynchronous HTTP request to the API with improved reliability features.
-        """
-        url = urljoin(self.base_url, endpoint)
+        self._async_client = async_client
+        return self
 
-        if retries_left is None:
-            retries_left = self.max_retries
-
-        request_headers = {
-            "Content-Type": "application/json",
-            "x-api-key": self.api_key,
-        }
-        if headers:
-            request_headers.update(headers)
-
-        # Use semaphore to limit concurrent requests
-        async with self._request_semaphore:
-            # Use circuit breaker pattern
-            async with self.circuit_breaker:
-                try:
-                    logger.debug(f"{method} {url}")
-                    if data:
-                        logger.debug(f"Request data: {json.dumps(data, indent=2)}")
-
-                    async with self._session.request(
-                        method=method,
-                        url=url,
-                        params=params,
-                        json=data,
-                        headers=request_headers,
-                        timeout=self.timeout,
-                    ) as response:
-                        try:
-                            body = await response.json()
-                        except ValueError:
-                            body = {"detail": await response.text()}
-
-                        if response.status >= 400:
-                            await _handle_async_error_response(response, body)
-
-                        logger.debug(
-                            f"Response: {json.dumps(body, indent=2) if isinstance(body, dict) else body}"
-                        )
-                        return body
-
-                except aiohttp.ClientError as e:
-                    if retries_left > 0:
-                        delay = self.retry_delay * (
-                            2 ** (self.max_retries - retries_left)
-                        )
-                        logger.warning(
-                            f"Request failed: {str(e)}. Retrying in {delay} seconds..."
-                        )
-                        await asyncio.sleep(delay)
-                        return await self._make_async_request(
-                            method, endpoint, params, data, headers, retries_left - 1
-                        )
-
-                    if isinstance(e, asyncio.TimeoutError):
-                        raise TimeoutError(
-                            message=f"Request timed out after {self.timeout} seconds",
-                            http_status=None,
-                        ) from e
-                    else:
-                        raise NetworkError(
-                            message=f"Network error: {str(e)}", http_status=None
-                        ) from e
-
-                except SwarmsError:
-                    raise
-
-                except Exception as e:
-                    logger.error(f"Unexpected error: {str(e)}")
-                    raise APIError(
-                        message=f"Unexpected error: {str(e)}", http_status=None
-                    ) from e
-
-    def clear_cache(self):
-        """Clear the in-memory cache."""
-        if self._cache:
-            self._cache.clear()
-
-
-# ===== API Resources =====
-
-
-class BaseResource:
-    """Base class for API resources"""
-
-    def __init__(self, client):
-        self.client = client
-
-
-class AgentResource(BaseResource):
-    """API resource for agent operations"""
-
-    def create(self, **kwargs) -> AgentCompletionResponse:
-        """
-        Create an agent completion.
-
-        Args:
-            agent_config: Configuration for the agent
-            task: The task to complete
-            history: Optional conversation history
-
-        Returns:
-            AgentCompletionResponse
-
-        Example:
-            ```python
-            response = client.agent.create(
-                agent_config={
-                    "agent_name": "Researcher",
-                    "description": "Conducts in-depth research",
-                    "model_name": "gpt-4o"
-                },
-                task="Research the impact of quantum computing on cryptography"
+    def get_async_httpx_client(self) -> httpx.AsyncClient:
+        """Get the underlying httpx.AsyncClient, constructing a new one if not previously set"""
+        if self._async_client is None:
+            self._headers[self.auth_header_name] = f"{self.prefix} {self.token}" if self.prefix else self.token
+            self._async_client = httpx.AsyncClient(
+                base_url=self._base_url,
+                cookies=self._cookies,
+                headers=self._headers,
+                timeout=self._timeout,
+                verify=self._verify_ssl,
+                follow_redirects=self._follow_redirects,
+                **self._httpx_args,
             )
-            ```
-        """
-        # Convert agent_config dict to AgentSpec if needed
-        if isinstance(kwargs.get("agent_config"), dict):
-            kwargs["agent_config"] = AgentSpec(**kwargs["agent_config"])
+        return self._async_client
 
-        # Create and validate request
-        request = AgentCompletion(**kwargs)
+    async def __aenter__(self) -> "AuthenticatedClient":
+        """Enter a context manager for underlying httpx.AsyncClient—you cannot enter twice (see httpx docs)"""
+        await self.get_async_httpx_client().__aenter__()
+        return self
 
-        # Make API request
-        data = self.client._make_request(
-            "POST", "v1/agent/completions", data=request.model_dump()
-        )
-        return _parse_response(AgentCompletionResponse, data)
-
-    def create_batch(
-        self, completions: List[Union[Dict, AgentCompletion]]
-    ) -> BatchAgentCompletionResponse:
-        """
-        Create multiple agent completions in batch.
-
-        Args:
-            completions: List of agent completion requests
-
-        Returns:
-            List of AgentCompletionResponse
-
-        Example:
-            ```python
-            responses = client.agent.create_batch([
-                {
-                    "agent_config": {
-                        "agent_name": "Researcher",
-                        "model_name": "gpt-4o-mini"
-                    },
-                    "task": "Summarize the latest quantum computing research"
-                },
-                {
-                    "agent_config": {
-                        "agent_name": "Writer",
-                        "model_name": "gpt-4o"
-                    },
-                    "task": "Write a blog post about AI safety"
-                }
-            ])
-            ```
-        """
-        # Convert each completion to AgentCompletion if it's a dict
-        request_data = []
-        for completion in completions:
-            if isinstance(completion, dict):
-                # Convert agent_config dict to AgentSpec if needed
-                if isinstance(completion.get("agent_config"), dict):
-                    completion["agent_config"] = AgentSpec(**completion["agent_config"])
-                request_data.append(AgentCompletion(**completion).model_dump())
-            else:
-                request_data.append(completion.model_dump())
-
-        # Make API request
-        data = self.client._make_request(
-            "POST", "v1/agent/batch/completions", data=request_data
-        )
-
-        # Parse responses
-        return _parse_response(BatchAgentCompletionResponse, data)
-
-    async def acreate(self, **kwargs) -> AgentCompletionResponse:
-        """
-        Create an agent completion asynchronously.
-
-        Args:
-            agent_config: Configuration for the agent
-            task: The task to complete
-            history: Optional conversation history
-
-        Returns:
-            AgentCompletionResponse
-        """
-        # Convert agent_config dict to AgentSpec if needed
-        if isinstance(kwargs.get("agent_config"), dict):
-            kwargs["agent_config"] = AgentSpec(**kwargs["agent_config"])
-
-        # Create and validate request
-        request = AgentCompletion(**kwargs)
-
-        # Make API request
-        data = await self.client._make_async_request(
-            "POST", "v1/agent/completions", data=request.model_dump()
-        )
-        return _parse_response(AgentCompletionResponse, data)
-
-    async def acreate_batch(
-        self, completions: List[Union[Dict, AgentCompletion]]
-    ) -> List[AgentCompletionResponse]:
-        """
-        Create multiple agent completions in batch asynchronously.
-
-        Args:
-            completions: List of agent completion requests
-
-        Returns:
-            List of AgentCompletionResponse
-        """
-        # Convert each completion to AgentCompletion if it's a dict
-        request_data = []
-        for completion in completions:
-            if isinstance(completion, dict):
-                # Convert agent_config dict to AgentSpec if needed
-                if isinstance(completion.get("agent_config"), dict):
-                    completion["agent_config"] = AgentSpec(**completion["agent_config"])
-                request_data.append(AgentCompletion(**completion).model_dump())
-            else:
-                request_data.append(completion.model_dump())
-
-        # Make API request
-        data = await self.client._make_async_request(
-            "POST", "v1/agent/batch/completions", data=request_data
-        )
-
-        # Parse responses
-        return [_parse_response(AgentCompletionResponse, item) for item in data]
-
-
-class SwarmResource(BaseResource):
-    """API resource for swarm operations"""
-
-    def create(self, **kwargs) -> SwarmCompletionResponse:
-        """
-        Create a swarm completion.
-
-        Args:
-            name: Name of the swarm
-            description: Description of the swarm
-            agents: List of agent specifications
-            max_loops: Maximum number of loops
-            swarm_type: Type of swarm
-            task: The task to complete
-            tasks: List of tasks for batch processing
-            messages: List of messages to process
-            service_tier: Service tier ('standard' or 'flex')
-
-        Returns:
-            SwarmCompletionResponse
-
-        Example:
-            ```python
-            response = client.swarm.create(
-                name="Research Swarm",
-                swarm_type="SequentialWorkflow",
-                task="Research quantum computing advances in 2024",
-                agents=[
-                    {
-                        "agent_name": "Researcher",
-                        "description": "Conducts in-depth research",
-                        "model_name": "gpt-4o"
-                    },
-                    {
-                        "agent_name": "Critic",
-                        "description": "Evaluates arguments for flaws",
-                        "model_name": "gpt-4o-mini"
-                    }
-                ]
-            )
-            ```
-        """
-        # Process agents if they are dicts
-        if "agents" in kwargs and kwargs["agents"]:
-            agents = []
-            for agent in kwargs["agents"]:
-                if isinstance(agent, dict):
-                    agents.append(AgentSpec(**agent))
-                else:
-                    agents.append(agent)
-            kwargs["agents"] = agents
-
-        # Create and validate request
-        request = SwarmSpec(**kwargs)
-
-        # Make API request
-        data = self.client._make_request(
-            "POST", "v1/swarm/completions", data=request.model_dump()
-        )
-        return _parse_response(SwarmCompletionResponse, data)
-
-    def create_batch(
-        self, swarms: List[Union[Dict, SwarmSpec]]
-    ) -> List[SwarmCompletionResponse]:
-        """
-        Create multiple swarm completions in batch.
-
-        Args:
-            swarms: List of swarm specifications
-
-        Returns:
-            List of SwarmCompletionResponse
-
-        Example:
-            ```python
-            responses = client.swarm.create_batch([
-                {
-                    "name": "Research Swarm",
-                    "swarm_type": "auto",
-                    "task": "Research quantum computing",
-                    "agents": [
-                        {"agent_name": "Researcher", "model_name": "gpt-4o"}
-                    ]
-                },
-                {
-                    "name": "Writing Swarm",
-                    "swarm_type": "SequentialWorkflow",
-                    "task": "Write a blog post about AI safety",
-                    "agents": [
-                        {"agent_name": "Writer", "model_name": "gpt-4o"}
-                    ]
-                }
-            ])
-            ```
-        """
-        # Process each swarm
-        request_data = []
-        for swarm in swarms:
-            if isinstance(swarm, dict):
-                # Process agents if they are dicts
-                if "agents" in swarm and swarm["agents"]:
-                    agents = []
-                    for agent in swarm["agents"]:
-                        if isinstance(agent, dict):
-                            agents.append(AgentSpec(**agent))
-                        else:
-                            agents.append(agent)
-                    swarm["agents"] = agents
-
-                request_data.append(SwarmSpec(**swarm).model_dump())
-            else:
-                request_data.append(swarm.model_dump())
-
-        # Make API request
-        data = self.client._make_request(
-            "POST", "v1/swarm/batch/completions", data=request_data
-        )
-
-        # Parse responses
-        return [_parse_response(SwarmCompletionResponse, item) for item in data]
-
-    @cached(ttl=3600)  # Cache for 1 hour
-    def list_types(self) -> SwarmTypesResponse:
-        """List available swarm types."""
-        data = self.client._make_request("GET", "v1/swarms/available")
-        return _parse_response(SwarmTypesResponse, data)
-
-    @cached(ttl=3600)  # Cache for 1 hour
-    async def alist_types(self) -> SwarmTypesResponse:
-        """List available swarm types asynchronously."""
-        data = await self.client._make_async_request("GET", "v1/swarms/available")
-        return _parse_response(SwarmTypesResponse, data)
-
-    async def acreate(self, **kwargs) -> SwarmCompletionResponse:
-        """
-        Create a swarm completion asynchronously.
-
-        Args:
-            name: Name of the swarm
-            description: Description of the swarm
-            agents: List of agent specifications
-            max_loops: Maximum number of loops
-            swarm_type: Type of swarm
-            task: The task to complete
-            tasks: List of tasks for batch processing
-            messages: List of messages to process
-            service_tier: Service tier ('standard' or 'flex')
-
-        Returns:
-            SwarmCompletionResponse
-        """
-        # Process agents if they are dicts
-        if "agents" in kwargs and kwargs["agents"]:
-            agents = []
-            for agent in kwargs["agents"]:
-                if isinstance(agent, dict):
-                    agents.append(AgentSpec(**agent))
-                else:
-                    agents.append(agent)
-            kwargs["agents"] = agents
-
-        # Create and validate request
-        request = SwarmSpec(**kwargs)
-
-        # Make API request
-        data = await self.client._make_async_request(
-            "POST", "v1/swarm/completions", data=request.model_dump()
-        )
-        return _parse_response(SwarmCompletionResponse, data)
-
-    async def acreate_batch(
-        self, swarms: List[Union[Dict, SwarmSpec]]
-    ) -> List[SwarmCompletionResponse]:
-        """
-        Create multiple swarm completions in batch asynchronously.
-
-        Args:
-            swarms: List of swarm specifications
-
-        Returns:
-            List of SwarmCompletionResponse
-        """
-        # Process each swarm
-        request_data = []
-        for swarm in swarms:
-            if isinstance(swarm, dict):
-                # Process agents if they are dicts
-                if "agents" in swarm and swarm["agents"]:
-                    agents = []
-                    for agent in swarm["agents"]:
-                        if isinstance(agent, dict):
-                            agents.append(AgentSpec(**agent))
-                        else:
-                            agents.append(agent)
-                    swarm["agents"] = agents
-
-                request_data.append(SwarmSpec(**swarm).model_dump())
-            else:
-                request_data.append(swarm.model_dump())
-
-        # Make API request
-        data = await self.client._make_async_request(
-            "POST", "v1/swarm/batch/completions", data=request_data
-        )
-
-        # Parse responses
-        return [_parse_response(SwarmCompletionResponse, item) for item in data]
-
-
-class ModelsResource(BaseResource):
-    """API resource for model operations"""
-
-    @cached(ttl=3600)  # Cache for 1 hour
-    def list(self) -> ModelsResponse:
-        """List available models."""
-        data = self.client._make_request("GET", "v1/models/available")
-        return _parse_response(ModelsResponse, data)
-
-    @cached(ttl=3600)  # Cache for 1 hour
-    def list_models(self) -> ModelsResponse:
-        return self.list()
-
-    def models_list(self) -> ModelsResponse:
-        return self.list()
-
-    @cached(ttl=3600)  # Cache for 1 hour
-    async def alist(self) -> ModelsResponse:
-        """List available models asynchronously."""
-        data = await self.client._make_async_request("GET", "v1/models/available")
-        return _parse_response(ModelsResponse, data)
-
-
-class LogsResource(BaseResource):
-    """API resource for log operations"""
-
-    def list(self) -> LogsResponse:
-        """
-        List API request logs.
-
-        Returns:
-            LogsResponse
-
-        Example:
-            ```python
-            response = client.logs.list()
-            print(f"Found {response.count} logs")
-            ```
-        """
-        data = self.client._make_request("GET", "v1/swarm/logs")
-        return _parse_response(LogsResponse, data)
-
-    async def alist(self) -> LogsResponse:
-        """
-        List API request logs asynchronously.
-
-        Returns:
-            LogsResponse
-        """
-        data = await self.client._make_async_request("GET", "v1/swarm/logs")
-        return _parse_response(LogsResponse, data)
-
-
-# Simplified default client for convenience
-client = SwarmsClient()
+    async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
+        """Exit a context manager for underlying httpx.AsyncClient (see httpx docs)"""
+        await self.get_async_httpx_client().__aexit__(*args, **kwargs)
