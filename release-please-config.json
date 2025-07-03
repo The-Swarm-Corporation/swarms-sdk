@@ -61,6 +61,6 @@
   ],
   "release-type": "python",
   "extra-files": [
-    "src/swarms/_version.py"
+    "src/swarms_client/_version.py"
   ]
 }

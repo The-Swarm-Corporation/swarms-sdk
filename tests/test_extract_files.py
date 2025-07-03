@@ -4,8 +4,8 @@ from typing import Sequence
 
 import pytest
 
-from swarms._types import FileTypes
-from swarms._utils import extract_files
+from swarms_client._types import FileTypes
+from swarms_client._utils import extract_files
 
 
 def test_removes_files_from_input() -> None:

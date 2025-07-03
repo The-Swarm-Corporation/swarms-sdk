@@ -8,15 +8,15 @@ from typing_extensions import Required, Annotated, TypedDict
 
 import pytest
 
-from swarms._types import NOT_GIVEN, Base64FileInput
-from swarms._utils import (
+from swarms_client._types import NOT_GIVEN, Base64FileInput
+from swarms_client._utils import (
     PropertyInfo,
     transform as _transform,
     parse_datetime,
     async_transform as _async_transform,
 )
-from swarms._compat import PYDANTIC_V2
-from swarms._models import BaseModel
+from swarms_client._compat import PYDANTIC_V2
+from swarms_client._models import BaseModel
 
 _T = TypeVar("_T")
 
