@@ -1,343 +1,379 @@
-# Swarms SDK
+# Swarms Python API library
 
-[![PyPI version](https://badge.fury.io/py/swarms-client.svg)](https://badge.fury.io/py/swarms-client)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![PyPI version](<https://img.shields.io/pypi/v/swarms.svg?label=pypi%20(stable)>)](https://pypi.org/project/swarms/)
 
-A production-grade Python SDK for the Swarms API, designed for enterprise applications requiring high reliability, scalability, and maintainability.
+The Swarms Python library provides convenient access to the Swarms REST API from any Python 3.8+
+application. The library includes type definitions for all request params and response fields,
+and offers both synchronous and asynchronous clients powered by [httpx](https://github.com/encode/httpx).
 
-> 📚 For complete documentation, visit [Swarms API Python Client Documentation](https://docs.swarms.world/en/latest/swarms_cloud/python_client/)
+It is generated with [Stainless](https://www.stainless.com/).
 
-## Enterprise Features
+## Documentation
 
-- 🚀 **High Performance**: Async-first design with connection pooling and advanced session management
-- 🛡️ **Enterprise Security**: Secure API key management and comprehensive error handling
-- 📊 **Observability**: Extensive logging with loguru and detailed telemetry
-- 🔄 **Reliability**: Automatic retries with exponential backoff and circuit breaker pattern
-- 🎯 **Type Safety**: Full type hints and validation with Pydantic
-- 📚 **Documentation**: Comprehensive API reference and usage examples
-- 🧪 **Testing**: Comprehensive test suite with detailed reporting
-- 🔒 **Security**: Regular security audits and dependency updates
+The full API of this library can be found in [api.md](api.md).
 
-## Getting Started
+## Installation
 
-### 1. Get Your API Key
-
-First, obtain your API key from the [Swarms Platform](https://swarms.world/platform/api-keys). Keep your API key secure and never expose it in client-side code or version control.
-
-### 2. Installation
-
-```bash
-pip install -U swarms-client
+```sh
+# install from this staging repo
+pip install git+ssh://git@github.com/stainless-sdks/swarms-python.git
 ```
 
-## API Resources
+> [!NOTE]
+> Once this package is [published to PyPI](https://www.stainless.com/docs/guides/publish), this will become: `pip install --pre swarms`
 
-### Individual Agent Completions
+## Usage
 
-```python
-from swarms_client import SwarmsClient
-from swarms_client.client import AgentSpec
-
-client = SwarmsClient()
-
-response = client.agent.create(
-    agent_config=AgentSpec(
-        agent_name="financial_analyst",
-        model_name="gpt-4o-mini",
-        temperature=0.5,  # Lower temperature for more precise financial analysis
-        description="A specialized financial analyst who can analyze market trends, financial data, and provide investment insights",
-        system_prompt="""You are an expert financial analyst with deep knowledge of:
-- Financial markets and trading
-- Company financial analysis and valuation
-- Economic indicators and their impact
-- Investment strategies and portfolio management
-- Risk assessment and management
-
-Provide detailed, data-driven analysis and insights while maintaining professional financial accuracy.""",
-    ).model_dump(),
-    task="Please analyze the recent performance of major market indices and provide key insights.",
-)
-
-print(response.model_dump_json(indent=4))
-
-)
-
-```
-
-## Agent Batch Endpoint
-
-This is the batch endpoint example, where you can create custom configurations of agents and they'll execute autonomously. 
+The full API of this library can be found in [api.md](api.md).
 
 ```python
-from swarms_client.client import SwarmsClient
 import os
-import sys
-from dotenv import load_dotenv
+from swarms import Swarms
 
-# Load environment variables from .env file
-load_dotenv()
-
-# Get API key with error handling
-api_key = os.getenv("SWARMS_API_KEY")
-
-# Initialize the client with explicit API key
-client = SwarmsClient(api_key=api_key)
-
-
-def run_agent_batch_example():
-    """Example of running batch agent completions"""
-    try:
-        # Define multiple agent completion requests
-        agent_completions = [
-            {
-                "agent_config": {
-                    "agent_name": "Market Researcher",
-                    "description": "Analyzes market trends and opportunities",
-                    "model_name": "gpt-4o-mini",
-                    "temperature": 0.7,
-                },
-                "task": "Analyze the current market trends in AI and ML",
-            },
-            {
-                "agent_config": {
-                    "agent_name": "Technical Writer",
-                    "description": "Creates technical documentation and reports",
-                    "model_name": "gpt-4o",
-                    "temperature": 0.4,
-                },
-                "task": "Write a technical overview of transformer architecture",
-            },
-        ]
-
-        # Execute batch agent completions
-        responses = client.agent.create_batch(completions=agent_completions)
-
-        # print(responses)
-        print(responses.model_dump_json(indent=4))
-        print(type(responses))
-
-    except Exception as e:
-        print(f"Error during batch processing: {str(e)}")
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    print("Running Agent Batch Example...")
-    run_agent_batch_example()
-```
-
-
-### Swarm Resource
-
-```python
-# Create a swarm
-swarm = client.swarm.create(
-    name="research-swarm",
-    swarm_type="SequentialWorkflow",
-    task="Research and analyze quantum computing",
-    agents=[
-        {
-            "agent_name": "researcher",
-            "model_name": "gpt-4",
-            "role": "researcher"
-        },
-        {
-            "agent_name": "analyst",
-            "model_name": "gpt-4",
-            "role": "analyst"
-        }
-    ]
+client = Swarms(
+    api_key=os.environ.get("SWARMS_API_KEY"),  # This is the default and can be omitted
 )
 
-# Create multiple swarms in batch
-swarms = client.swarm.create_batch([
-    {
-        "name": "swarm-1",
-        "task": "Task 1",
-        "agents": [...]
-    },
-    {
-        "name": "swarm-2",
-        "task": "Task 2",
-        "agents": [...]
-    }
-])
-
-# List available swarm types
-swarm_types = client.swarm.list_types()
-
-# Async versions
-async_swarm = await client.swarm.acreate(...)
-async_swarms = await client.swarm.acreate_batch(...)
-async_types = await client.swarm.alist_types()
+response = client.get_root()
 ```
 
-### Models Resource
+While you can provide an `api_key` keyword argument,
+we recommend using [python-dotenv](https://pypi.org/project/python-dotenv/)
+to add `SWARMS_API_KEY="My API Key"` to your `.env` file
+so that your API Key is not stored in source control.
+
+## Async usage
+
+Simply import `AsyncSwarms` instead of `Swarms` and use `await` with each API call:
 
 ```python
-# List available models
-models = client.models.list()
+import os
+import asyncio
+from swarms import AsyncSwarms
 
-# Async version
-async_models = await client.models.alist()
-```
-
-### Logs Resource
-
-```python
-# List API request logs
-logs = client.logs.list()
-
-# Async version
-async_logs = await client.logs.alist()
-```
-
-## Advanced Features
-
-### Connection Pooling
-
-```python
-client = SwarmsClient(
-    api_key="your-api-key",
-    pool_connections=100,  # Number of connection pools
-    pool_maxsize=100,      # Maximum connections in pool
-    keep_alive_timeout=5   # Keep-alive timeout in seconds
-)
-```
-
-### Circuit Breaker
-
-```python
-client = SwarmsClient(
-    api_key="your-api-key",
-    circuit_breaker_threshold=5,  # Failures before circuit opens
-    circuit_breaker_timeout=60    # Seconds before retry
-)
-```
-
-### Caching
-
-```python
-client = SwarmsClient(
-    api_key="your-api-key",
-    enable_cache=True  # Enable in-memory caching
+client = AsyncSwarms(
+    api_key=os.environ.get("SWARMS_API_KEY"),  # This is the default and can be omitted
 )
 
-# Clear cache manually
-client.clear_cache()
+
+async def main() -> None:
+    response = await client.get_root()
+
+
+asyncio.run(main())
 ```
 
-## Error Handling
+Functionality between the synchronous and asynchronous clients is otherwise identical.
+
+### With aiohttp
+
+By default, the async client uses `httpx` for HTTP requests. However, for improved concurrency performance you may also use `aiohttp` as the HTTP backend.
+
+You can enable this by installing `aiohttp`:
+
+```sh
+# install from this staging repo
+pip install 'swarms[aiohttp] @ git+ssh://git@github.com/stainless-sdks/swarms-python.git'
+```
+
+Then you can enable it by instantiating the client with `http_client=DefaultAioHttpClient()`:
 
 ```python
-from swarms_client import (
-    SwarmsError,
-    AuthenticationError,
-    RateLimitError,
-    APIError,
-    InvalidRequestError,
-    InsufficientCreditsError,
-    TimeoutError,
-    NetworkError
+import os
+import asyncio
+from swarms import DefaultAioHttpClient
+from swarms import AsyncSwarms
+
+
+async def main() -> None:
+    async with AsyncSwarms(
+        api_key=os.environ.get("SWARMS_API_KEY"),  # This is the default and can be omitted
+        http_client=DefaultAioHttpClient(),
+    ) as client:
+        response = await client.get_root()
+
+
+asyncio.run(main())
+```
+
+## Using types
+
+Nested request parameters are [TypedDicts](https://docs.python.org/3/library/typing.html#typing.TypedDict). Responses are [Pydantic models](https://docs.pydantic.dev) which also provide helper methods for things like:
+
+- Serializing back into JSON, `model.to_json()`
+- Converting to a dictionary, `model.to_dict()`
+
+Typed requests and responses provide autocomplete and documentation within your editor. If you would like to see type errors in VS Code to help catch bugs earlier, set `python.analysis.typeCheckingMode` to `basic`.
+
+## Nested params
+
+Nested parameters are dictionaries, typed using `TypedDict`, for example:
+
+```python
+from swarms import Swarms
+
+client = Swarms()
+
+response = client.agent.run(
+    x_api_key="x-api-key",
+    agent_config={"agent_name": "agent_name"},
 )
+print(response.agent_config)
+```
+
+## Handling errors
+
+When the library is unable to connect to the API (for example, due to network connection problems or a timeout), a subclass of `swarms.APIConnectionError` is raised.
+
+When the API returns a non-success status code (that is, 4xx or 5xx
+response), a subclass of `swarms.APIStatusError` is raised, containing `status_code` and `response` properties.
+
+All errors inherit from `swarms.APIError`.
+
+```python
+import swarms
+from swarms import Swarms
+
+client = Swarms()
 
 try:
-    response = client.agent.create(...)
-except AuthenticationError as e:
-    print(f"Authentication error: {e}")
-except RateLimitError as e:
-    print(f"Rate limit exceeded: {e}")
-except APIError as e:
-    print(f"API error: {e}")
-except SwarmsError as e:
-    print(f"Other error: {e}")
+    client.get_root()
+except swarms.APIConnectionError as e:
+    print("The server could not be reached")
+    print(e.__cause__)  # an underlying Exception, likely raised within httpx.
+except swarms.RateLimitError as e:
+    print("A 429 status code was received; we should back off a bit.")
+except swarms.APIStatusError as e:
+    print("Another non-200-range status code was received")
+    print(e.status_code)
+    print(e.response)
 ```
 
-## Testing
+Error codes are as follows:
 
-The SDK includes a comprehensive test suite that validates all core functionality:
+| Status Code | Error Type                 |
+| ----------- | -------------------------- |
+| 400         | `BadRequestError`          |
+| 401         | `AuthenticationError`      |
+| 403         | `PermissionDeniedError`    |
+| 404         | `NotFoundError`            |
+| 422         | `UnprocessableEntityError` |
+| 429         | `RateLimitError`           |
+| >=500       | `InternalServerError`      |
+| N/A         | `APIConnectionError`       |
 
-```bash
-# Run the test suite
-python test_client.py
+### Retries
 
-# View the test report
-cat test_report.md
+Certain errors are automatically retried 2 times by default, with a short exponential backoff.
+Connection errors (for example, due to a network connectivity problem), 408 Request Timeout, 409 Conflict,
+429 Rate Limit, and >=500 Internal errors are all retried by default.
+
+You can use the `max_retries` option to configure or disable retry settings:
+
+```python
+from swarms import Swarms
+
+# Configure the default for all requests:
+client = Swarms(
+    # default is 2
+    max_retries=0,
+)
+
+# Or, configure per-request:
+client.with_options(max_retries=5).get_root()
 ```
+
+### Timeouts
+
+By default requests time out after 1 minute. You can configure this with a `timeout` option,
+which accepts a float or an [`httpx.Timeout`](https://www.python-httpx.org/advanced/timeouts/#fine-tuning-the-configuration) object:
+
+```python
+from swarms import Swarms
+
+# Configure the default for all requests:
+client = Swarms(
+    # 20 seconds (default is 1 minute)
+    timeout=20.0,
+)
+
+# More granular control:
+client = Swarms(
+    timeout=httpx.Timeout(60.0, read=5.0, write=10.0, connect=2.0),
+)
+
+# Override per-request:
+client.with_options(timeout=5.0).get_root()
+```
+
+On timeout, an `APITimeoutError` is thrown.
+
+Note that requests that time out are [retried twice by default](#retries).
+
+## Advanced
+
+### Logging
+
+We use the standard library [`logging`](https://docs.python.org/3/library/logging.html) module.
+
+You can enable logging by setting the environment variable `SWARMS_LOG` to `info`.
+
+```shell
+$ export SWARMS_LOG=info
+```
+
+Or to `debug` for more verbose logging.
+
+### How to tell whether `None` means `null` or missing
+
+In an API response, a field may be explicitly `null`, or missing entirely; in either case, its value is `None` in this library. You can differentiate the two cases with `.model_fields_set`:
+
+```py
+if response.my_field is None:
+  if 'my_field' not in response.model_fields_set:
+    print('Got json like {}, without a "my_field" key present at all.')
+  else:
+    print('Got json like {"my_field": null}.')
+```
+
+### Accessing raw response data (e.g. headers)
+
+The "raw" Response object can be accessed by prefixing `.with_raw_response.` to any HTTP method call, e.g.,
+
+```py
+from swarms import Swarms
+
+client = Swarms()
+response = client.with_raw_response.get_root()
+print(response.headers.get('X-My-Header'))
+
+client = response.parse()  # get the object that `get_root()` would have returned
+print(client)
+```
+
+These methods return an [`APIResponse`](https://github.com/stainless-sdks/swarms-python/tree/main/src/swarms/_response.py) object.
+
+The async client returns an [`AsyncAPIResponse`](https://github.com/stainless-sdks/swarms-python/tree/main/src/swarms/_response.py) with the same structure, the only difference being `await`able methods for reading the response content.
+
+#### `.with_streaming_response`
+
+The above interface eagerly reads the full response body when you make the request, which may not always be what you want.
+
+To stream the response body, use `.with_streaming_response` instead, which requires a context manager and only reads the response body once you call `.read()`, `.text()`, `.json()`, `.iter_bytes()`, `.iter_text()`, `.iter_lines()` or `.parse()`. In the async client, these are async methods.
+
+```python
+with client.with_streaming_response.get_root() as response:
+    print(response.headers.get("X-My-Header"))
+
+    for line in response.iter_lines():
+        print(line)
+```
+
+The context manager is required so that the response will reliably be closed.
+
+### Making custom/undocumented requests
+
+This library is typed for convenient access to the documented API.
+
+If you need to access undocumented endpoints, params, or response properties, the library can still be used.
+
+#### Undocumented endpoints
+
+To make requests to undocumented endpoints, you can make requests using `client.get`, `client.post`, and other
+http verbs. Options on the client will be respected (such as retries) when making this request.
+
+```py
+import httpx
+
+response = client.post(
+    "/foo",
+    cast_to=httpx.Response,
+    body={"my_param": True},
+)
+
+print(response.headers.get("x-foo"))
+```
+
+#### Undocumented request params
+
+If you want to explicitly send an extra param, you can do so with the `extra_query`, `extra_body`, and `extra_headers` request
+options.
+
+#### Undocumented response properties
+
+To access undocumented response properties, you can access the extra fields like `response.unknown_prop`. You
+can also get all the extra fields on the Pydantic model as a dict with
+[`response.model_extra`](https://docs.pydantic.dev/latest/api/base_model/#pydantic.BaseModel.model_extra).
+
+### Configuring the HTTP client
+
+You can directly override the [httpx client](https://www.python-httpx.org/api/#client) to customize it for your use case, including:
+
+- Support for [proxies](https://www.python-httpx.org/advanced/proxies/)
+- Custom [transports](https://www.python-httpx.org/advanced/transports/)
+- Additional [advanced](https://www.python-httpx.org/advanced/clients/) functionality
+
+```python
+import httpx
+from swarms import Swarms, DefaultHttpxClient
+
+client = Swarms(
+    # Or use the `SWARMS_BASE_URL` env var
+    base_url="http://my.test.server.example.com:8083",
+    http_client=DefaultHttpxClient(
+        proxy="http://my.test.proxy.example.com",
+        transport=httpx.HTTPTransport(local_address="0.0.0.0"),
+    ),
+)
+```
+
+You can also customize the client on a per-request basis by using `with_options()`:
+
+```python
+client.with_options(http_client=DefaultHttpxClient(...))
+```
+
+### Managing HTTP resources
+
+By default the library closes underlying HTTP connections whenever the client is [garbage collected](https://docs.python.org/3/reference/datamodel.html#object.__del__). You can manually close the client using the `.close()` method if desired, or with a context manager that closes when exiting.
+
+```py
+from swarms import Swarms
+
+with Swarms() as client:
+  # make requests here
+  ...
+
+# HTTP client is now closed
+```
+
+## Versioning
+
+This package generally follows [SemVer](https://semver.org/spec/v2.0.0.html) conventions, though certain backwards-incompatible changes may be released as minor versions:
+
+1. Changes that only affect static types, without breaking runtime behavior.
+2. Changes to library internals which are technically public but not intended or documented for external use. _(Please open a GitHub issue to let us know if you are relying on such internals.)_
+3. Changes that we do not expect to impact the vast majority of users in practice.
+
+We take backwards-compatibility seriously and work hard to ensure you can rely on a smooth upgrade experience.
+
+We are keen for your feedback; please open an [issue](https://www.github.com/stainless-sdks/swarms-python/issues) with questions, bugs, or suggestions.
+
+### Determining the installed version
+
+If you've upgraded to the latest version but aren't seeing any new features you were expecting then your python environment is likely still using an older version.
+
+You can determine the version that is being used at runtime with:
+
+```py
+import swarms
+print(swarms.__version__)
+```
+
+## Requirements
+
+Python 3.8 or higher.
 
 ## Contributing
 
-We welcome contributions to make the SDK even more robust and feature-rich. Here's how you can help:
-
-1. **Report Issues**
-   - Use the GitHub issue tracker
-   
-   - Include detailed reproduction steps
-   
-   - Provide error logs and stack traces
-   
-   - Specify your environment details
-
-2. **Submit Pull Requests**
-   - Fork the repository
-   
-   - Create a feature branch
-   
-   - Write tests for new features
-   
-   - Update documentation
-   
-   - Submit a PR with a clear description
-
-3. **Development Setup**
-   ```bash
-   # Clone the repository
-   git clone https://github.com/The-Swarm-Corporation/swarms-sdk.git
-   cd swarms-sdk
-
-   # Create virtual environment
-   python -m venv venv
-   source venv/bin/activate  # or `venv\Scripts\activate` on Windows
-
-   # Install dependencies
-   pip install -e ".[dev]"
-   ```
-
-4. **Code Quality**
-   - Follow PEP 8 style guide
-   
-   - Use type hints
-   
-   - Write docstrings
-   
-   - Run linters: `flake8`, `mypy`
-   
-   - Format code: `black`
-
-## Enterprise Support
-
-For enterprise customers, we offer:
-
-- Priority support
-
-- Custom feature development
-
-- SLA guarantees
-
-- Security audits
-
-- Performance optimization
-
-- Training and documentation
-
-Contact our enterprise team at enterprise@swarms.world
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Security
-
-For security concerns, please email security@swarms.world
+See [the contributing documentation](./CONTRIBUTING.md).
