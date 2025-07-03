@@ -7,7 +7,7 @@ from typing import Any, cast
 
 import pytest
 
-from swarms import Swarms, AsyncSwarms
+from swarms import SwarmsClient, AsyncSwarmsClient
 from tests.utils import assert_matches_type
 
 base_url = os.environ.get("TEST_API_BASE_URL", "http://127.0.0.1:4010")
@@ -18,13 +18,13 @@ class TestHealth:
 
     @pytest.mark.skip()
     @parametrize
-    def test_method_check(self, client: Swarms) -> None:
+    def test_method_check(self, client: SwarmsClient) -> None:
         health = client.health.check()
         assert_matches_type(object, health, path=["response"])
 
     @pytest.mark.skip()
     @parametrize
-    def test_raw_response_check(self, client: Swarms) -> None:
+    def test_raw_response_check(self, client: SwarmsClient) -> None:
         response = client.health.with_raw_response.check()
 
         assert response.is_closed is True
@@ -34,7 +34,7 @@ class TestHealth:
 
     @pytest.mark.skip()
     @parametrize
-    def test_streaming_response_check(self, client: Swarms) -> None:
+    def test_streaming_response_check(self, client: SwarmsClient) -> None:
         with client.health.with_streaming_response.check() as response:
             assert not response.is_closed
             assert response.http_request.headers.get("X-Stainless-Lang") == "python"
@@ -52,13 +52,13 @@ class TestAsyncHealth:
 
     @pytest.mark.skip()
     @parametrize
-    async def test_method_check(self, async_client: AsyncSwarms) -> None:
+    async def test_method_check(self, async_client: AsyncSwarmsClient) -> None:
         health = await async_client.health.check()
         assert_matches_type(object, health, path=["response"])
 
     @pytest.mark.skip()
     @parametrize
-    async def test_raw_response_check(self, async_client: AsyncSwarms) -> None:
+    async def test_raw_response_check(self, async_client: AsyncSwarmsClient) -> None:
         response = await async_client.health.with_raw_response.check()
 
         assert response.is_closed is True
@@ -68,7 +68,7 @@ class TestAsyncHealth:
 
     @pytest.mark.skip()
     @parametrize
-    async def test_streaming_response_check(self, async_client: AsyncSwarms) -> None:
+    async def test_streaming_response_check(self, async_client: AsyncSwarmsClient) -> None:
         async with async_client.health.with_streaming_response.check() as response:
             assert not response.is_closed
             assert response.http_request.headers.get("X-Stainless-Lang") == "python"

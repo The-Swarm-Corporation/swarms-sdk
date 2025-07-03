@@ -47,7 +47,6 @@ class BatchResource(SyncAPIResource):
         self,
         *,
         body: Iterable[SwarmSpecParam],
-        x_api_key: str,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
         # The extra values given here take precedence over values defined on the client or passed to this method.
         extra_headers: Headers | None = None,
@@ -67,7 +66,6 @@ class BatchResource(SyncAPIResource):
 
           timeout: Override the client-level default timeout for this request, in seconds
         """
-        extra_headers = {"x-api-key": x_api_key, **(extra_headers or {})}
         return self._post(
             "/v1/swarm/batch/completions",
             body=maybe_transform(body, Iterable[SwarmSpecParam]),
@@ -102,7 +100,6 @@ class AsyncBatchResource(AsyncAPIResource):
         self,
         *,
         body: Iterable[SwarmSpecParam],
-        x_api_key: str,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
         # The extra values given here take precedence over values defined on the client or passed to this method.
         extra_headers: Headers | None = None,
@@ -122,7 +119,6 @@ class AsyncBatchResource(AsyncAPIResource):
 
           timeout: Override the client-level default timeout for this request, in seconds
         """
-        extra_headers = {"x-api-key": x_api_key, **(extra_headers or {})}
         return await self._post(
             "/v1/swarm/batch/completions",
             body=await async_maybe_transform(body, Iterable[SwarmSpecParam]),

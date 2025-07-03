@@ -3,17 +3,14 @@
 from __future__ import annotations
 
 from typing import Dict, List, Union, Iterable, Optional
-from typing_extensions import Required, Annotated, TypedDict
+from typing_extensions import TypedDict
 
-from .._utils import PropertyInfo
 from .agent_spec_param import AgentSpecParam
 
 __all__ = ["AgentRunParams"]
 
 
 class AgentRunParams(TypedDict, total=False):
-    x_api_key: Required[Annotated[str, PropertyInfo(alias="x-api-key")]]
-
     agent_config: Optional[AgentSpecParam]
     """The configuration of the agent to be completed."""
 

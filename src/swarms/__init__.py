@@ -5,20 +5,30 @@ import typing as _t
 from . import types
 from ._types import NOT_GIVEN, Omit, NoneType, NotGiven, Transport, ProxiesTypes
 from ._utils import file_from_path
-from ._client import Client, Stream, Swarms, Timeout, Transport, AsyncClient, AsyncStream, AsyncSwarms, RequestOptions
+from ._client import (
+    Client,
+    Stream,
+    Timeout,
+    Transport,
+    AsyncClient,
+    AsyncStream,
+    SwarmsClient,
+    RequestOptions,
+    AsyncSwarmsClient,
+)
 from ._models import BaseModel
 from ._version import __title__, __version__
 from ._response import APIResponse as APIResponse, AsyncAPIResponse as AsyncAPIResponse
 from ._constants import DEFAULT_TIMEOUT, DEFAULT_MAX_RETRIES, DEFAULT_CONNECTION_LIMITS
 from ._exceptions import (
     APIError,
-    SwarmsError,
     ConflictError,
     NotFoundError,
     APIStatusError,
     RateLimitError,
     APITimeoutError,
     BadRequestError,
+    SwarmsClientError,
     APIConnectionError,
     AuthenticationError,
     InternalServerError,
@@ -39,7 +49,7 @@ __all__ = [
     "NotGiven",
     "NOT_GIVEN",
     "Omit",
-    "SwarmsError",
+    "SwarmsClientError",
     "APIError",
     "APIStatusError",
     "APITimeoutError",
@@ -59,8 +69,8 @@ __all__ = [
     "AsyncClient",
     "Stream",
     "AsyncStream",
-    "Swarms",
-    "AsyncSwarms",
+    "SwarmsClient",
+    "AsyncSwarmsClient",
     "file_from_path",
     "BaseModel",
     "DEFAULT_TIMEOUT",

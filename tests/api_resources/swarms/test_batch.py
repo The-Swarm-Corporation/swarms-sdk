@@ -7,7 +7,7 @@ from typing import Any, cast
 
 import pytest
 
-from swarms import Swarms, AsyncSwarms
+from swarms import SwarmsClient, AsyncSwarmsClient
 from tests.utils import assert_matches_type
 from swarms.types.swarms import BatchRunResponse
 
@@ -19,19 +19,17 @@ class TestBatch:
 
     @pytest.mark.skip()
     @parametrize
-    def test_method_run(self, client: Swarms) -> None:
+    def test_method_run(self, client: SwarmsClient) -> None:
         batch = client.swarms.batch.run(
             body=[{}],
-            x_api_key="x-api-key",
         )
         assert_matches_type(BatchRunResponse, batch, path=["response"])
 
     @pytest.mark.skip()
     @parametrize
-    def test_raw_response_run(self, client: Swarms) -> None:
+    def test_raw_response_run(self, client: SwarmsClient) -> None:
         response = client.swarms.batch.with_raw_response.run(
             body=[{}],
-            x_api_key="x-api-key",
         )
 
         assert response.is_closed is True
@@ -41,10 +39,9 @@ class TestBatch:
 
     @pytest.mark.skip()
     @parametrize
-    def test_streaming_response_run(self, client: Swarms) -> None:
+    def test_streaming_response_run(self, client: SwarmsClient) -> None:
         with client.swarms.batch.with_streaming_response.run(
             body=[{}],
-            x_api_key="x-api-key",
         ) as response:
             assert not response.is_closed
             assert response.http_request.headers.get("X-Stainless-Lang") == "python"
@@ -62,19 +59,17 @@ class TestAsyncBatch:
 
     @pytest.mark.skip()
     @parametrize
-    async def test_method_run(self, async_client: AsyncSwarms) -> None:
+    async def test_method_run(self, async_client: AsyncSwarmsClient) -> None:
         batch = await async_client.swarms.batch.run(
             body=[{}],
-            x_api_key="x-api-key",
         )
         assert_matches_type(BatchRunResponse, batch, path=["response"])
 
     @pytest.mark.skip()
     @parametrize
-    async def test_raw_response_run(self, async_client: AsyncSwarms) -> None:
+    async def test_raw_response_run(self, async_client: AsyncSwarmsClient) -> None:
         response = await async_client.swarms.batch.with_raw_response.run(
             body=[{}],
-            x_api_key="x-api-key",
         )
 
         assert response.is_closed is True
@@ -84,10 +79,9 @@ class TestAsyncBatch:
 
     @pytest.mark.skip()
     @parametrize
-    async def test_streaming_response_run(self, async_client: AsyncSwarms) -> None:
+    async def test_streaming_response_run(self, async_client: AsyncSwarmsClient) -> None:
         async with async_client.swarms.batch.with_streaming_response.run(
             body=[{}],
-            x_api_key="x-api-key",
         ) as response:
             assert not response.is_closed
             assert response.http_request.headers.get("X-Stainless-Lang") == "python"

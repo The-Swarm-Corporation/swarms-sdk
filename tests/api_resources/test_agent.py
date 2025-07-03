@@ -7,7 +7,7 @@ from typing import Any, cast
 
 import pytest
 
-from swarms import Swarms, AsyncSwarms
+from swarms import SwarmsClient, AsyncSwarmsClient
 from tests.utils import assert_matches_type
 from swarms.types import AgentRunResponse
 
@@ -19,17 +19,14 @@ class TestAgent:
 
     @pytest.mark.skip()
     @parametrize
-    def test_method_run(self, client: Swarms) -> None:
-        agent = client.agent.run(
-            x_api_key="x-api-key",
-        )
+    def test_method_run(self, client: SwarmsClient) -> None:
+        agent = client.agent.run()
         assert_matches_type(AgentRunResponse, agent, path=["response"])
 
     @pytest.mark.skip()
     @parametrize
-    def test_method_run_with_all_params(self, client: Swarms) -> None:
+    def test_method_run_with_all_params(self, client: SwarmsClient) -> None:
         agent = client.agent.run(
-            x_api_key="x-api-key",
             agent_config={
                 "agent_name": "agent_name",
                 "auto_generate_prompt": True,
@@ -53,10 +50,8 @@ class TestAgent:
 
     @pytest.mark.skip()
     @parametrize
-    def test_raw_response_run(self, client: Swarms) -> None:
-        response = client.agent.with_raw_response.run(
-            x_api_key="x-api-key",
-        )
+    def test_raw_response_run(self, client: SwarmsClient) -> None:
+        response = client.agent.with_raw_response.run()
 
         assert response.is_closed is True
         assert response.http_request.headers.get("X-Stainless-Lang") == "python"
@@ -65,10 +60,8 @@ class TestAgent:
 
     @pytest.mark.skip()
     @parametrize
-    def test_streaming_response_run(self, client: Swarms) -> None:
-        with client.agent.with_streaming_response.run(
-            x_api_key="x-api-key",
-        ) as response:
+    def test_streaming_response_run(self, client: SwarmsClient) -> None:
+        with client.agent.with_streaming_response.run() as response:
             assert not response.is_closed
             assert response.http_request.headers.get("X-Stainless-Lang") == "python"
 
@@ -85,17 +78,14 @@ class TestAsyncAgent:
 
     @pytest.mark.skip()
     @parametrize
-    async def test_method_run(self, async_client: AsyncSwarms) -> None:
-        agent = await async_client.agent.run(
-            x_api_key="x-api-key",
-        )
+    async def test_method_run(self, async_client: AsyncSwarmsClient) -> None:
+        agent = await async_client.agent.run()
         assert_matches_type(AgentRunResponse, agent, path=["response"])
 
     @pytest.mark.skip()
     @parametrize
-    async def test_method_run_with_all_params(self, async_client: AsyncSwarms) -> None:
+    async def test_method_run_with_all_params(self, async_client: AsyncSwarmsClient) -> None:
         agent = await async_client.agent.run(
-            x_api_key="x-api-key",
             agent_config={
                 "agent_name": "agent_name",
                 "auto_generate_prompt": True,
@@ -119,10 +109,8 @@ class TestAsyncAgent:
 
     @pytest.mark.skip()
     @parametrize
-    async def test_raw_response_run(self, async_client: AsyncSwarms) -> None:
-        response = await async_client.agent.with_raw_response.run(
-            x_api_key="x-api-key",
-        )
+    async def test_raw_response_run(self, async_client: AsyncSwarmsClient) -> None:
+        response = await async_client.agent.with_raw_response.run()
 
         assert response.is_closed is True
         assert response.http_request.headers.get("X-Stainless-Lang") == "python"
@@ -131,10 +119,8 @@ class TestAsyncAgent:
 
     @pytest.mark.skip()
     @parametrize
-    async def test_streaming_response_run(self, async_client: AsyncSwarms) -> None:
-        async with async_client.agent.with_streaming_response.run(
-            x_api_key="x-api-key",
-        ) as response:
+    async def test_streaming_response_run(self, async_client: AsyncSwarmsClient) -> None:
+        async with async_client.agent.with_streaming_response.run() as response:
             assert not response.is_closed
             assert response.http_request.headers.get("X-Stainless-Lang") == "python"
 

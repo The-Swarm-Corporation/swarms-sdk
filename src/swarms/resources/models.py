@@ -42,7 +42,6 @@ class ModelsResource(SyncAPIResource):
     def list_available(
         self,
         *,
-        x_api_key: str,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
         # The extra values given here take precedence over values defined on the client or passed to this method.
         extra_headers: Headers | None = None,
@@ -50,19 +49,7 @@ class ModelsResource(SyncAPIResource):
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
     ) -> ModelListAvailableResponse:
-        """
-        Get all available models.
-
-        Args:
-          extra_headers: Send extra headers
-
-          extra_query: Add additional query parameters to the request
-
-          extra_body: Add additional JSON properties to the request
-
-          timeout: Override the client-level default timeout for this request, in seconds
-        """
-        extra_headers = {"x-api-key": x_api_key, **(extra_headers or {})}
+        """Get all available models."""
         return self._get(
             "/v1/models/available",
             options=make_request_options(
@@ -95,7 +82,6 @@ class AsyncModelsResource(AsyncAPIResource):
     async def list_available(
         self,
         *,
-        x_api_key: str,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
         # The extra values given here take precedence over values defined on the client or passed to this method.
         extra_headers: Headers | None = None,
@@ -103,19 +89,7 @@ class AsyncModelsResource(AsyncAPIResource):
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
     ) -> ModelListAvailableResponse:
-        """
-        Get all available models.
-
-        Args:
-          extra_headers: Send extra headers
-
-          extra_query: Add additional query parameters to the request
-
-          extra_body: Add additional JSON properties to the request
-
-          timeout: Override the client-level default timeout for this request, in seconds
-        """
-        extra_headers = {"x-api-key": x_api_key, **(extra_headers or {})}
+        """Get all available models."""
         return await self._get(
             "/v1/models/available",
             options=make_request_options(

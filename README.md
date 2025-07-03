@@ -1,8 +1,8 @@
-# Swarms Python API library
+# Swarms Client Python API library
 
 [![PyPI version](<https://img.shields.io/pypi/v/swarms-client.svg?label=pypi%20(stable)>)](https://pypi.org/project/swarms-client/)
 
-The Swarms Python library provides convenient access to the Swarms REST API from any Python 3.8+
+The Swarms Client Python library provides convenient access to the Swarms Client REST API from any Python 3.8+
 application. The library includes type definitions for all request params and response fields,
 and offers both synchronous and asynchronous clients powered by [httpx](https://github.com/encode/httpx).
 
@@ -10,7 +10,7 @@ It is generated with [Stainless](https://www.stainless.com/).
 
 ## Documentation
 
-The full API of this library can be found in [api.md](api.md).
+The REST API documentation can be found on [docs.swarms.world](https://docs.swarms.world/en/latest/). The full API of this library can be found in [api.md](api.md).
 
 ## Installation
 
@@ -25,9 +25,9 @@ The full API of this library can be found in [api.md](api.md).
 
 ```python
 import os
-from swarms import Swarms
+from swarms import SwarmsClient
 
-client = Swarms(
+client = SwarmsClient(
     api_key=os.environ.get("SWARMS_API_KEY"),  # This is the default and can be omitted
 )
 
@@ -41,14 +41,14 @@ so that your API Key is not stored in source control.
 
 ## Async usage
 
-Simply import `AsyncSwarms` instead of `Swarms` and use `await` with each API call:
+Simply import `AsyncSwarmsClient` instead of `SwarmsClient` and use `await` with each API call:
 
 ```python
 import os
 import asyncio
-from swarms import AsyncSwarms
+from swarms import AsyncSwarmsClient
 
-client = AsyncSwarms(
+client = AsyncSwarmsClient(
     api_key=os.environ.get("SWARMS_API_KEY"),  # This is the default and can be omitted
 )
 
@@ -79,11 +79,11 @@ Then you can enable it by instantiating the client with `http_client=DefaultAioH
 import os
 import asyncio
 from swarms import DefaultAioHttpClient
-from swarms import AsyncSwarms
+from swarms import AsyncSwarmsClient
 
 
 async def main() -> None:
-    async with AsyncSwarms(
+    async with AsyncSwarmsClient(
         api_key=os.environ.get("SWARMS_API_KEY"),  # This is the default and can be omitted
         http_client=DefaultAioHttpClient(),
     ) as client:
@@ -107,12 +107,11 @@ Typed requests and responses provide autocomplete and documentation within your 
 Nested parameters are dictionaries, typed using `TypedDict`, for example:
 
 ```python
-from swarms import Swarms
+from swarms import SwarmsClient
 
-client = Swarms()
+client = SwarmsClient()
 
 response = client.agent.run(
-    x_api_key="x-api-key",
     agent_config={"agent_name": "agent_name"},
 )
 print(response.agent_config)
@@ -129,9 +128,9 @@ All errors inherit from `swarms.APIError`.
 
 ```python
 import swarms
-from swarms import Swarms
+from swarms import SwarmsClient
 
-client = Swarms()
+client = SwarmsClient()
 
 try:
     client.get_root()
@@ -168,10 +167,10 @@ Connection errors (for example, due to a network connectivity problem), 408 Requ
 You can use the `max_retries` option to configure or disable retry settings:
 
 ```python
-from swarms import Swarms
+from swarms import SwarmsClient
 
 # Configure the default for all requests:
-client = Swarms(
+client = SwarmsClient(
     # default is 2
     max_retries=0,
 )
@@ -186,16 +185,16 @@ By default requests time out after 1 minute. You can configure this with a `time
 which accepts a float or an [`httpx.Timeout`](https://www.python-httpx.org/advanced/timeouts/#fine-tuning-the-configuration) object:
 
 ```python
-from swarms import Swarms
+from swarms import SwarmsClient
 
 # Configure the default for all requests:
-client = Swarms(
+client = SwarmsClient(
     # 20 seconds (default is 1 minute)
     timeout=20.0,
 )
 
 # More granular control:
-client = Swarms(
+client = SwarmsClient(
     timeout=httpx.Timeout(60.0, read=5.0, write=10.0, connect=2.0),
 )
 
@@ -213,10 +212,10 @@ Note that requests that time out are [retried twice by default](#retries).
 
 We use the standard library [`logging`](https://docs.python.org/3/library/logging.html) module.
 
-You can enable logging by setting the environment variable `SWARMS_LOG` to `info`.
+You can enable logging by setting the environment variable `SWARMS_CLIENT_LOG` to `info`.
 
 ```shell
-$ export SWARMS_LOG=info
+$ export SWARMS_CLIENT_LOG=info
 ```
 
 Or to `debug` for more verbose logging.
@@ -238,9 +237,9 @@ if response.my_field is None:
 The "raw" Response object can be accessed by prefixing `.with_raw_response.` to any HTTP method call, e.g.,
 
 ```py
-from swarms import Swarms
+from swarms import SwarmsClient
 
-client = Swarms()
+client = SwarmsClient()
 response = client.with_raw_response.get_root()
 print(response.headers.get('X-My-Header'))
 
@@ -312,10 +311,10 @@ You can directly override the [httpx client](https://www.python-httpx.org/api/#c
 
 ```python
 import httpx
-from swarms import Swarms, DefaultHttpxClient
+from swarms import SwarmsClient, DefaultHttpxClient
 
-client = Swarms(
-    # Or use the `SWARMS_BASE_URL` env var
+client = SwarmsClient(
+    # Or use the `SWARMS_CLIENT_BASE_URL` env var
     base_url="http://my.test.server.example.com:8083",
     http_client=DefaultHttpxClient(
         proxy="http://my.test.proxy.example.com",
@@ -335,9 +334,9 @@ client.with_options(http_client=DefaultHttpxClient(...))
 By default the library closes underlying HTTP connections whenever the client is [garbage collected](https://docs.python.org/3/reference/datamodel.html#object.__del__). You can manually close the client using the `.close()` method if desired, or with a context manager that closes when exiting.
 
 ```py
-from swarms import Swarms
+from swarms import SwarmsClient
 
-with Swarms() as client:
+with SwarmsClient() as client:
   # make requests here
   ...
 
