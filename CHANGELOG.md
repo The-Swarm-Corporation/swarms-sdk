@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.0 (2025-07-04)
+
+Full Changelog: [v0.2.0...v0.3.0](https://github.com/The-Swarm-Corporation/swarms-sdk/compare/v0.2.0...v0.3.0)
+
+### Features
+
+* **api:** /v1/ratelimits ([4405997](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/4405997499ef214898b6c52633226629c4592856))
+* **api:** api update ([1d35a30](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/1d35a30e5800ac89bf89355a0c781df082dd270a))
+
+
+### Chores
+
+* update SDK settings ([90ae048](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/90ae048a61f0d9c62ce251febad3e9666580f66f))
+
 ## 0.2.0 (2025-07-03)
 
 Full Changelog: [v0.1.8...v0.2.0](https://github.com/The-Swarm-Corporation/swarms-sdk/compare/v0.1.8...v0.2.0)
