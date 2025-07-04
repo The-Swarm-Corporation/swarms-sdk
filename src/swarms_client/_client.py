@@ -40,6 +40,7 @@ from ._base_client import (
     make_request_options,
 )
 from .resources.agent import agent
+from .resources.client import client
 from .resources.swarms import swarms
 
 __all__ = [
@@ -59,6 +60,7 @@ class SwarmsClient(SyncAPIClient):
     agent: agent.AgentResource
     models: models.ModelsResource
     swarms: swarms.SwarmsResource
+    client: client.ClientResource
     with_raw_response: SwarmsClientWithRawResponse
     with_streaming_response: SwarmsClientWithStreamedResponse
 
@@ -116,6 +118,7 @@ class SwarmsClient(SyncAPIClient):
         self.agent = agent.AgentResource(self)
         self.models = models.ModelsResource(self)
         self.swarms = swarms.SwarmsResource(self)
+        self.client = client.ClientResource(self)
         self.with_raw_response = SwarmsClientWithRawResponse(self)
         self.with_streaming_response = SwarmsClientWithStreamedResponse(self)
 
@@ -261,6 +264,7 @@ class AsyncSwarmsClient(AsyncAPIClient):
     agent: agent.AsyncAgentResource
     models: models.AsyncModelsResource
     swarms: swarms.AsyncSwarmsResource
+    client: client.AsyncClientResource
     with_raw_response: AsyncSwarmsClientWithRawResponse
     with_streaming_response: AsyncSwarmsClientWithStreamedResponse
 
@@ -318,6 +322,7 @@ class AsyncSwarmsClient(AsyncAPIClient):
         self.agent = agent.AsyncAgentResource(self)
         self.models = models.AsyncModelsResource(self)
         self.swarms = swarms.AsyncSwarmsResource(self)
+        self.client = client.AsyncClientResource(self)
         self.with_raw_response = AsyncSwarmsClientWithRawResponse(self)
         self.with_streaming_response = AsyncSwarmsClientWithStreamedResponse(self)
 
@@ -464,6 +469,7 @@ class SwarmsClientWithRawResponse:
         self.agent = agent.AgentResourceWithRawResponse(client.agent)
         self.models = models.ModelsResourceWithRawResponse(client.models)
         self.swarms = swarms.SwarmsResourceWithRawResponse(client.swarms)
+        self.client = client.ClientResourceWithRawResponse(client.client)
 
         self.get_root = to_raw_response_wrapper(
             client.get_root,
@@ -476,6 +482,7 @@ class AsyncSwarmsClientWithRawResponse:
         self.agent = agent.AsyncAgentResourceWithRawResponse(client.agent)
         self.models = models.AsyncModelsResourceWithRawResponse(client.models)
         self.swarms = swarms.AsyncSwarmsResourceWithRawResponse(client.swarms)
+        self.client = client.AsyncClientResourceWithRawResponse(client.client)
 
         self.get_root = async_to_raw_response_wrapper(
             client.get_root,
@@ -488,6 +495,7 @@ class SwarmsClientWithStreamedResponse:
         self.agent = agent.AgentResourceWithStreamingResponse(client.agent)
         self.models = models.ModelsResourceWithStreamingResponse(client.models)
         self.swarms = swarms.SwarmsResourceWithStreamingResponse(client.swarms)
+        self.client = client.ClientResourceWithStreamingResponse(client.client)
 
         self.get_root = to_streamed_response_wrapper(
             client.get_root,
@@ -500,6 +508,7 @@ class AsyncSwarmsClientWithStreamedResponse:
         self.agent = agent.AsyncAgentResourceWithStreamingResponse(client.agent)
         self.models = models.AsyncModelsResourceWithStreamingResponse(client.models)
         self.swarms = swarms.AsyncSwarmsResourceWithStreamingResponse(client.swarms)
+        self.client = client.AsyncClientResourceWithStreamingResponse(client.client)
 
         self.get_root = async_to_streamed_response_wrapper(
             client.get_root,
