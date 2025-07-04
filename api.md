@@ -76,3 +76,17 @@ from swarms_client.types.swarms import BatchRunResponse
 Methods:
 
 - <code title="post /v1/swarm/batch/completions">client.swarms.batch.<a href="./src/swarms_client/resources/swarms/batch.py">run</a>(\*\*<a href="src/swarms_client/types/swarms/batch_run_params.py">params</a>) -> <a href="./src/swarms_client/types/swarms/batch_run_response.py">BatchRunResponse</a></code>
+
+# Client
+
+## Rate
+
+Types:
+
+```python
+from swarms_client.types.client import RateGetLimitsResponse
+```
+
+Methods:
+
+- <code title="get /v1/rate/limits">client.client.rate.<a href="./src/swarms_client/resources/client/rate.py">get_limits</a>() -> <a href="./src/swarms_client/types/client/rate_get_limits_response.py">RateGetLimitsResponse</a></code>

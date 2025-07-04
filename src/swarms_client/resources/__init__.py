@@ -8,6 +8,14 @@ from .agent import (
     AgentResourceWithStreamingResponse,
     AsyncAgentResourceWithStreamingResponse,
 )
+from .client import (
+    ClientResource,
+    AsyncClientResource,
+    ClientResourceWithRawResponse,
+    AsyncClientResourceWithRawResponse,
+    ClientResourceWithStreamingResponse,
+    AsyncClientResourceWithStreamingResponse,
+)
 from .health import (
     HealthResource,
     AsyncHealthResource,
@@ -58,4 +66,10 @@ __all__ = [
     "AsyncSwarmsResourceWithRawResponse",
     "SwarmsResourceWithStreamingResponse",
     "AsyncSwarmsResourceWithStreamingResponse",
+    "ClientResource",
+    "AsyncClientResource",
+    "ClientResourceWithRawResponse",
+    "AsyncClientResourceWithRawResponse",
+    "ClientResourceWithStreamingResponse",
+    "AsyncClientResourceWithStreamingResponse",
 ]
