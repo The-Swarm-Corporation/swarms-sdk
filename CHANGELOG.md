@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.1 (2025-07-05)
+
+Full Changelog: [v0.3.0...v0.3.1](https://github.com/The-Swarm-Corporation/swarms-sdk/compare/v0.3.0...v0.3.1)
+
+### Chores
+
+* configure new SDK language ([0b77958](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/0b779588ef5f414dc958097e1c47ab457eaca5c6))
+
 ## 0.3.0 (2025-07-04)
 
 Full Changelog: [v0.2.0...v0.3.0](https://github.com/The-Swarm-Corporation/swarms-sdk/compare/v0.2.0...v0.3.0)
