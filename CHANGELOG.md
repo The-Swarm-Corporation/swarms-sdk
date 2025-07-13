@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.4.0 (2025-07-13)
+
+Full Changelog: [v0.3.0...v0.4.0](https://github.com/The-Swarm-Corporation/swarms-sdk/compare/v0.3.0...v0.4.0)
+
+### Features
+
+* **api:** api update ([c05496b](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/c05496bf3d71e50b14ece2db908b39a80dd4c20e))
+
+
+### Bug Fixes
+
+* **client:** don't send Content-Type header on GET requests ([779c6b6](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/779c6b6e2e5a689cd8c773db79b0b53613fc13d9))
+* **parsing:** correctly handle nested discriminated unions ([998f51b](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/998f51baa69470143e3b43041f18f4e34e9a8ef6))
+
+
+### Chores
+
+* configure new SDK language ([0b77958](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/0b779588ef5f414dc958097e1c47ab457eaca5c6))
+* **internal:** bump pinned h11 dep ([05d9703](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/05d97034f7de4d87752e53552731abf1fbc31b12))
+* **package:** mark python 3.13 as supported ([598580a](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/598580ab8bd50951cd1a57e7e62ea759dedc4246))
+* **readme:** fix version rendering on pypi ([22731a7](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/22731a7a3f32f1d56257c290ad0d758ef1950a45))
+
 ## 0.3.0 (2025-07-04)
 
 Full Changelog: [v0.2.0...v0.3.0](https://github.com/The-Swarm-Corporation/swarms-sdk/compare/v0.2.0...v0.3.0)
