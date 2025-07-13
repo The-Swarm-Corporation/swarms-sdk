@@ -29,12 +29,6 @@ class SwarmSpecParam(TypedDict, total=False):
     representation.
     """
 
-    imgs: Optional[List[str]]
-    """
-    A list of image URLs that may be associated with the swarm's task or
-    representation.
-    """
-
     max_loops: Optional[int]
     """
     The maximum number of execution loops allowed for the swarm, enabling repeated

@@ -106,7 +106,6 @@ class SwarmsResource(SyncAPIResource):
         agents: Optional[Iterable[AgentSpecParam]] | NotGiven = NOT_GIVEN,
         description: Optional[str] | NotGiven = NOT_GIVEN,
         img: Optional[str] | NotGiven = NOT_GIVEN,
-        imgs: Optional[List[str]] | NotGiven = NOT_GIVEN,
         max_loops: Optional[int] | NotGiven = NOT_GIVEN,
         messages: Union[Iterable[Dict[str, object]], Dict[str, object], None] | NotGiven = NOT_GIVEN,
         name: Optional[str] | NotGiven = NOT_GIVEN,
@@ -157,9 +156,6 @@ class SwarmsResource(SyncAPIResource):
           img: An optional image URL that may be associated with the swarm's task or
               representation.
 
-          imgs: A list of image URLs that may be associated with the swarm's task or
-              representation.
-
           max_loops: The maximum number of execution loops allowed for the swarm, enabling repeated
               processing if needed.
 
@@ -203,7 +199,6 @@ class SwarmsResource(SyncAPIResource):
                     "agents": agents,
                     "description": description,
                     "img": img,
-                    "imgs": imgs,
                     "max_loops": max_loops,
                     "messages": messages,
                     "name": name,
@@ -296,7 +291,6 @@ class AsyncSwarmsResource(AsyncAPIResource):
         agents: Optional[Iterable[AgentSpecParam]] | NotGiven = NOT_GIVEN,
         description: Optional[str] | NotGiven = NOT_GIVEN,
         img: Optional[str] | NotGiven = NOT_GIVEN,
-        imgs: Optional[List[str]] | NotGiven = NOT_GIVEN,
         max_loops: Optional[int] | NotGiven = NOT_GIVEN,
         messages: Union[Iterable[Dict[str, object]], Dict[str, object], None] | NotGiven = NOT_GIVEN,
         name: Optional[str] | NotGiven = NOT_GIVEN,
@@ -347,9 +341,6 @@ class AsyncSwarmsResource(AsyncAPIResource):
           img: An optional image URL that may be associated with the swarm's task or
               representation.
 
-          imgs: A list of image URLs that may be associated with the swarm's task or
-              representation.
-
           max_loops: The maximum number of execution loops allowed for the swarm, enabling repeated
               processing if needed.
 
@@ -393,7 +384,6 @@ class AsyncSwarmsResource(AsyncAPIResource):
                     "agents": agents,
                     "description": description,
                     "img": img,
-                    "imgs": imgs,
                     "max_loops": max_loops,
                     "messages": messages,
                     "name": name,
