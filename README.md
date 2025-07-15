@@ -77,7 +77,6 @@ pip install swarms-client[aiohttp]
 Then you can enable it by instantiating the client with `http_client=DefaultAioHttpClient()`:
 
 ```python
-import os
 import asyncio
 from swarms_client import DefaultAioHttpClient
 from swarms_client import AsyncSwarmsClient
@@ -85,7 +84,7 @@ from swarms_client import AsyncSwarmsClient
 
 async def main() -> None:
     async with AsyncSwarmsClient(
-        api_key=os.environ.get("SWARMS_API_KEY"),  # This is the default and can be omitted
+        api_key="My API Key",
         http_client=DefaultAioHttpClient(),
     ) as client:
         response = await client.get_root()
