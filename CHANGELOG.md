@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.0 (2025-07-15)
+
+Full Changelog: [v0.5.0...v0.6.0](https://github.com/The-Swarm-Corporation/swarms-sdk/compare/v0.5.0...v0.6.0)
+
+### Features
+
+* clean up environment call outs ([b30938f](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/b30938f43c02bb38eab11e50742cc27af6052092))
+
 ## 0.5.0 (2025-07-13)
 
 Full Changelog: [v0.4.0...v0.5.0](https://github.com/The-Swarm-Corporation/swarms-sdk/compare/v0.4.0...v0.5.0)
