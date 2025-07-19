@@ -131,6 +131,7 @@ class SwarmsResource(SyncAPIResource):
                 "DeepResearchSwarm",
                 "CouncilAsAJudge",
                 "InteractiveGroupChat",
+                "HeavySwarm",
             ]
         ]
         | NotGiven = NOT_GIVEN,
@@ -316,6 +317,7 @@ class AsyncSwarmsResource(AsyncAPIResource):
                 "DeepResearchSwarm",
                 "CouncilAsAJudge",
                 "InteractiveGroupChat",
+                "HeavySwarm",
             ]
         ]
         | NotGiven = NOT_GIVEN,
