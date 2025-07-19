@@ -46,6 +46,7 @@ class TestAgent:
             history={"foo": "bar"},
             img="img",
             imgs=["string"],
+            stream=True,
             task="task",
         )
         assert_matches_type(AgentRunResponse, agent, path=["response"])
@@ -110,6 +111,7 @@ class TestAsyncAgent:
             history={"foo": "bar"},
             img="img",
             imgs=["string"],
+            stream=True,
             task="task",
         )
         assert_matches_type(AgentRunResponse, agent, path=["response"])
