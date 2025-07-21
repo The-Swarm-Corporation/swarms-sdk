@@ -85,6 +85,7 @@ class SwarmSpecParam(TypedDict, total=False):
             "DeepResearchSwarm",
             "CouncilAsAJudge",
             "InteractiveGroupChat",
+            "HeavySwarm",
         ]
     ]
     """
