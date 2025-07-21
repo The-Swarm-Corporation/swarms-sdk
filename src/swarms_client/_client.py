@@ -30,7 +30,7 @@ from ._response import (
     async_to_raw_response_wrapper,
     async_to_streamed_response_wrapper,
 )
-from .resources import health, models
+from .resources import health, models, reasoning_agents
 from ._streaming import Stream as Stream, AsyncStream as AsyncStream
 from ._exceptions import APIStatusError
 from ._base_client import (
@@ -60,6 +60,7 @@ class SwarmsClient(SyncAPIClient):
     agent: agent.AgentResource
     models: models.ModelsResource
     swarms: swarms.SwarmsResource
+    reasoning_agents: reasoning_agents.ReasoningAgentsResource
     client: client.ClientResource
     with_raw_response: SwarmsClientWithRawResponse
     with_streaming_response: SwarmsClientWithStreamedResponse
@@ -118,6 +119,7 @@ class SwarmsClient(SyncAPIClient):
         self.agent = agent.AgentResource(self)
         self.models = models.ModelsResource(self)
         self.swarms = swarms.SwarmsResource(self)
+        self.reasoning_agents = reasoning_agents.ReasoningAgentsResource(self)
         self.client = client.ClientResource(self)
         self.with_raw_response = SwarmsClientWithRawResponse(self)
         self.with_streaming_response = SwarmsClientWithStreamedResponse(self)
@@ -264,6 +266,7 @@ class AsyncSwarmsClient(AsyncAPIClient):
     agent: agent.AsyncAgentResource
     models: models.AsyncModelsResource
     swarms: swarms.AsyncSwarmsResource
+    reasoning_agents: reasoning_agents.AsyncReasoningAgentsResource
     client: client.AsyncClientResource
     with_raw_response: AsyncSwarmsClientWithRawResponse
     with_streaming_response: AsyncSwarmsClientWithStreamedResponse
@@ -322,6 +325,7 @@ class AsyncSwarmsClient(AsyncAPIClient):
         self.agent = agent.AsyncAgentResource(self)
         self.models = models.AsyncModelsResource(self)
         self.swarms = swarms.AsyncSwarmsResource(self)
+        self.reasoning_agents = reasoning_agents.AsyncReasoningAgentsResource(self)
         self.client = client.AsyncClientResource(self)
         self.with_raw_response = AsyncSwarmsClientWithRawResponse(self)
         self.with_streaming_response = AsyncSwarmsClientWithStreamedResponse(self)
@@ -469,6 +473,7 @@ class SwarmsClientWithRawResponse:
         self.agent = agent.AgentResourceWithRawResponse(client.agent)
         self.models = models.ModelsResourceWithRawResponse(client.models)
         self.swarms = swarms.SwarmsResourceWithRawResponse(client.swarms)
+        self.reasoning_agents = reasoning_agents.ReasoningAgentsResourceWithRawResponse(client.reasoning_agents)
         self.client = client.ClientResourceWithRawResponse(client.client)
 
         self.get_root = to_raw_response_wrapper(
@@ -482,6 +487,7 @@ class AsyncSwarmsClientWithRawResponse:
         self.agent = agent.AsyncAgentResourceWithRawResponse(client.agent)
         self.models = models.AsyncModelsResourceWithRawResponse(client.models)
         self.swarms = swarms.AsyncSwarmsResourceWithRawResponse(client.swarms)
+        self.reasoning_agents = reasoning_agents.AsyncReasoningAgentsResourceWithRawResponse(client.reasoning_agents)
         self.client = client.AsyncClientResourceWithRawResponse(client.client)
 
         self.get_root = async_to_raw_response_wrapper(
@@ -495,6 +501,7 @@ class SwarmsClientWithStreamedResponse:
         self.agent = agent.AgentResourceWithStreamingResponse(client.agent)
         self.models = models.ModelsResourceWithStreamingResponse(client.models)
         self.swarms = swarms.SwarmsResourceWithStreamingResponse(client.swarms)
+        self.reasoning_agents = reasoning_agents.ReasoningAgentsResourceWithStreamingResponse(client.reasoning_agents)
         self.client = client.ClientResourceWithStreamingResponse(client.client)
 
         self.get_root = to_streamed_response_wrapper(
@@ -508,6 +515,9 @@ class AsyncSwarmsClientWithStreamedResponse:
         self.agent = agent.AsyncAgentResourceWithStreamingResponse(client.agent)
         self.models = models.AsyncModelsResourceWithStreamingResponse(client.models)
         self.swarms = swarms.AsyncSwarmsResourceWithStreamingResponse(client.swarms)
+        self.reasoning_agents = reasoning_agents.AsyncReasoningAgentsResourceWithStreamingResponse(
+            client.reasoning_agents
+        )
         self.client = client.AsyncClientResourceWithStreamingResponse(client.client)
 
         self.get_root = async_to_streamed_response_wrapper(
