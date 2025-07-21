@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.8.0 (2025-07-21)
+
+Full Changelog: [v0.7.0...v0.8.0](https://github.com/The-Swarm-Corporation/swarms-sdk/compare/v0.7.0...v0.8.0)
+
+### Features
+
+* **api:** add reasoning agent endpoints and gitbook docs ([4819ee5](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/4819ee5515eaa3f6e41453ca5dff4d7da70641fe))
+* **api:** add reasoning agent endpoints and gitbook docs ([4819ee5](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/4819ee5515eaa3f6e41453ca5dff4d7da70641fe))
+* **api:** api update ([2769feb](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/2769feb7c1b9aa63f9af6a0e4e233c7dbaff122a))
+
+
+### Chores
+
+* **internal:** version bump ([971384b](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/971384b0b98b8245db4acde95627aab017ed4f1e))
+
 ## 0.7.0 (2025-07-19)
 
 Full Changelog: [v0.6.0...v0.7.0](https://github.com/The-Swarm-Corporation/swarms-sdk/compare/v0.6.0...v0.7.0)
