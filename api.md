@@ -77,6 +77,22 @@ Methods:
 
 - <code title="post /v1/swarm/batch/completions">client.swarms.batch.<a href="./src/swarms_client/resources/swarms/batch.py">run</a>(\*\*<a href="src/swarms_client/types/swarms/batch_run_params.py">params</a>) -> <a href="./src/swarms_client/types/swarms/batch_run_response.py">BatchRunResponse</a></code>
 
+# ReasoningAgents
+
+Types:
+
+```python
+from swarms_client.types import (
+    ReasoningAgentCreateCompletionResponse,
+    ReasoningAgentListTypesResponse,
+)
+```
+
+Methods:
+
+- <code title="post /v1/reasoning-agent/completions">client.reasoning_agents.<a href="./src/swarms_client/resources/reasoning_agents.py">create_completion</a>(\*\*<a href="src/swarms_client/types/reasoning_agent_create_completion_params.py">params</a>) -> <a href="./src/swarms_client/types/reasoning_agent_create_completion_response.py">ReasoningAgentCreateCompletionResponse</a></code>
+- <code title="get /v1/reasoning-agent/types">client.reasoning_agents.<a href="./src/swarms_client/resources/reasoning_agents.py">list_types</a>() -> <a href="./src/swarms_client/types/reasoning_agent_list_types_response.py">ReasoningAgentListTypesResponse</a></code>
+
 # Client
 
 ## Rate
