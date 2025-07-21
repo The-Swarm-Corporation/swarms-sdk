@@ -2,7 +2,17 @@ from __future__ import annotations
 
 import os
 import inspect
-from typing import TYPE_CHECKING, Any, Type, Union, Generic, TypeVar, Callable, Optional, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Type,
+    Union,
+    Generic,
+    TypeVar,
+    Callable,
+    Optional,
+    cast,
+)
 from datetime import date, datetime
 from typing_extensions import (
     List,
@@ -375,7 +385,9 @@ def _construct_field(value: object, field: FieldInfo, key: str) -> object:
     if type_ is None:
         raise RuntimeError(f"Unexpected field type is None for {key}")
 
-    return construct_type(value=value, type_=type_, metadata=getattr(field, "metadata", None))
+    return construct_type(
+        value=value, type_=type_, metadata=getattr(field, "metadata", None)
+    )
 
 
 def is_basemodel(type_: type) -> bool:
@@ -429,7 +441,9 @@ def construct_type_unchecked(*, value: object, type_: type[_T]) -> _T:
     return cast(_T, construct_type(value=value, type_=type_))
 
 
-def construct_type(*, value: object, type_: object, metadata: Optional[List[Any]] = None) -> object:
+def construct_type(
+    *, value: object, type_: object, metadata: Optional[List[Any]] = None
+) -> object:
     """Loose coercion to the expected type with construction of nested values.
 
     If the given value does not match the expected type then it is returned as-is.

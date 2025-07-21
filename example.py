@@ -10,6 +10,5 @@ client = SwarmsClient(
     api_key=os.environ.get("SWARMS_API_KEY"),  # This is the default and can be omitted
 )
 
-response = client.get_root()
-models = client.models.list_available()
-print(models)
+
+print(client.client.rate.get_limits())

@@ -499,7 +499,7 @@ class SwarmsClientWithRawResponse:
         self.agent = agent.AgentResourceWithRawResponse(client.agent)
         self.models = models.ModelsResourceWithRawResponse(client.models)
         self.swarms = swarms.SwarmsResourceWithRawResponse(client.swarms)
-        self.client = client.ClientResourceWithRawResponse(client.client)
+        self.client = client.client.with_raw_response
 
         self.get_root = to_raw_response_wrapper(
             client.get_root,
@@ -512,7 +512,7 @@ class AsyncSwarmsClientWithRawResponse:
         self.agent = agent.AsyncAgentResourceWithRawResponse(client.agent)
         self.models = models.AsyncModelsResourceWithRawResponse(client.models)
         self.swarms = swarms.AsyncSwarmsResourceWithRawResponse(client.swarms)
-        self.client = client.AsyncClientResourceWithRawResponse(client.client)
+        self.client = client.client.with_raw_response
 
         self.get_root = async_to_raw_response_wrapper(
             client.get_root,
@@ -525,7 +525,7 @@ class SwarmsClientWithStreamedResponse:
         self.agent = agent.AgentResourceWithStreamingResponse(client.agent)
         self.models = models.ModelsResourceWithStreamingResponse(client.models)
         self.swarms = swarms.SwarmsResourceWithStreamingResponse(client.swarms)
-        self.client = client.ClientResourceWithStreamingResponse(client.client)
+        self.client = client.client.with_streaming_response
 
         self.get_root = to_streamed_response_wrapper(
             client.get_root,
@@ -538,7 +538,7 @@ class AsyncSwarmsClientWithStreamedResponse:
         self.agent = agent.AsyncAgentResourceWithStreamingResponse(client.agent)
         self.models = models.AsyncModelsResourceWithStreamingResponse(client.models)
         self.swarms = swarms.AsyncSwarmsResourceWithStreamingResponse(client.swarms)
-        self.client = client.AsyncClientResourceWithStreamingResponse(client.client)
+        self.client = client.client.with_streaming_response
 
         self.get_root = async_to_streamed_response_wrapper(
             client.get_root,
