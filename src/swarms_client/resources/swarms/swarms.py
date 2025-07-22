@@ -105,6 +105,9 @@ class SwarmsResource(SyncAPIResource):
         *,
         agents: Optional[Iterable[AgentSpecParam]] | NotGiven = NOT_GIVEN,
         description: Optional[str] | NotGiven = NOT_GIVEN,
+        heavy_swarm_loops_per_agent: Optional[int] | NotGiven = NOT_GIVEN,
+        heavy_swarm_question_agent_model_name: Optional[str] | NotGiven = NOT_GIVEN,
+        heavy_swarm_worker_model_name: Optional[str] | NotGiven = NOT_GIVEN,
         img: Optional[str] | NotGiven = NOT_GIVEN,
         max_loops: Optional[int] | NotGiven = NOT_GIVEN,
         messages: Union[Iterable[Dict[str, object]], Dict[str, object], None] | NotGiven = NOT_GIVEN,
@@ -154,6 +157,12 @@ class SwarmsResource(SyncAPIResource):
           description: A comprehensive description of the swarm's objectives, capabilities, and
               intended outcomes.
 
+          heavy_swarm_loops_per_agent: The number of loops to run per agent in the heavy swarm.
+
+          heavy_swarm_question_agent_model_name: The model name to use for the question agent in the heavy swarm.
+
+          heavy_swarm_worker_model_name: The model name to use for the worker agent in the heavy swarm.
+
           img: An optional image URL that may be associated with the swarm's task or
               representation.
 
@@ -199,6 +208,9 @@ class SwarmsResource(SyncAPIResource):
                 {
                     "agents": agents,
                     "description": description,
+                    "heavy_swarm_loops_per_agent": heavy_swarm_loops_per_agent,
+                    "heavy_swarm_question_agent_model_name": heavy_swarm_question_agent_model_name,
+                    "heavy_swarm_worker_model_name": heavy_swarm_worker_model_name,
                     "img": img,
                     "max_loops": max_loops,
                     "messages": messages,
@@ -291,6 +303,9 @@ class AsyncSwarmsResource(AsyncAPIResource):
         *,
         agents: Optional[Iterable[AgentSpecParam]] | NotGiven = NOT_GIVEN,
         description: Optional[str] | NotGiven = NOT_GIVEN,
+        heavy_swarm_loops_per_agent: Optional[int] | NotGiven = NOT_GIVEN,
+        heavy_swarm_question_agent_model_name: Optional[str] | NotGiven = NOT_GIVEN,
+        heavy_swarm_worker_model_name: Optional[str] | NotGiven = NOT_GIVEN,
         img: Optional[str] | NotGiven = NOT_GIVEN,
         max_loops: Optional[int] | NotGiven = NOT_GIVEN,
         messages: Union[Iterable[Dict[str, object]], Dict[str, object], None] | NotGiven = NOT_GIVEN,
@@ -340,6 +355,12 @@ class AsyncSwarmsResource(AsyncAPIResource):
           description: A comprehensive description of the swarm's objectives, capabilities, and
               intended outcomes.
 
+          heavy_swarm_loops_per_agent: The number of loops to run per agent in the heavy swarm.
+
+          heavy_swarm_question_agent_model_name: The model name to use for the question agent in the heavy swarm.
+
+          heavy_swarm_worker_model_name: The model name to use for the worker agent in the heavy swarm.
+
           img: An optional image URL that may be associated with the swarm's task or
               representation.
 
@@ -385,6 +406,9 @@ class AsyncSwarmsResource(AsyncAPIResource):
                 {
                     "agents": agents,
                     "description": description,
+                    "heavy_swarm_loops_per_agent": heavy_swarm_loops_per_agent,
+                    "heavy_swarm_question_agent_model_name": heavy_swarm_question_agent_model_name,
+                    "heavy_swarm_worker_model_name": heavy_swarm_worker_model_name,
                     "img": img,
                     "max_loops": max_loops,
                     "messages": messages,

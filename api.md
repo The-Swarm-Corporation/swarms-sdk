@@ -6,9 +6,15 @@ Methods:
 
 # Health
 
+Types:
+
+```python
+from swarms_client.types import HealthCheckResponse
+```
+
 Methods:
 
-- <code title="get /health">client.health.<a href="./src/swarms_client/resources/health.py">check</a>() -> object</code>
+- <code title="get /health">client.health.<a href="./src/swarms_client/resources/health.py">check</a>() -> <a href="./src/swarms_client/types/health_check_response.py">HealthCheckResponse</a></code>
 
 # Agent
 
