@@ -106,6 +106,9 @@ class TestSwarms:
                 }
             ],
             description="description",
+            heavy_swarm_loops_per_agent=0,
+            heavy_swarm_question_agent_model_name="heavy_swarm_question_agent_model_name",
+            heavy_swarm_worker_model_name="heavy_swarm_worker_model_name",
             img="img",
             max_loops=0,
             messages=[{"foo": "bar"}],
@@ -245,6 +248,9 @@ class TestAsyncSwarms:
                 }
             ],
             description="description",
+            heavy_swarm_loops_per_agent=0,
+            heavy_swarm_question_agent_model_name="heavy_swarm_question_agent_model_name",
+            heavy_swarm_worker_model_name="heavy_swarm_worker_model_name",
             img="img",
             max_loops=0,
             messages=[{"foo": "bar"}],

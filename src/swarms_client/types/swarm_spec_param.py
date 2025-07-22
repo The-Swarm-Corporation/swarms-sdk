@@ -23,6 +23,15 @@ class SwarmSpecParam(TypedDict, total=False):
     intended outcomes.
     """
 
+    heavy_swarm_loops_per_agent: Optional[int]
+    """The number of loops to run per agent in the heavy swarm."""
+
+    heavy_swarm_question_agent_model_name: Optional[str]
+    """The model name to use for the question agent in the heavy swarm."""
+
+    heavy_swarm_worker_model_name: Optional[str]
+    """The model name to use for the worker agent in the heavy swarm."""
+
     img: Optional[str]
     """
     An optional image URL that may be associated with the swarm's task or
