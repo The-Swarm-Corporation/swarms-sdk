@@ -1,8 +1,13 @@
 # File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
 
-from typing import Dict
-from typing_extensions import TypeAlias
+from typing import Optional
+
+from .._models import BaseModel
 
 __all__ = ["ModelListAvailableResponse"]
 
-ModelListAvailableResponse: TypeAlias = Dict[str, object]
+
+class ModelListAvailableResponse(BaseModel):
+    models: Optional[object] = None
+
+    success: Optional[bool] = None
