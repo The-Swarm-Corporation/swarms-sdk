@@ -16,3 +16,10 @@ from .model_list_available_response import (
 from .swarm_check_available_response import (
     SwarmCheckAvailableResponse as SwarmCheckAvailableResponse,
 )
+from .reasoning_agent_list_types_response import ReasoningAgentListTypesResponse as ReasoningAgentListTypesResponse
+from .reasoning_agent_create_completion_params import (
+    ReasoningAgentCreateCompletionParams as ReasoningAgentCreateCompletionParams,
+)
+from .reasoning_agent_create_completion_response import (
+    ReasoningAgentCreateCompletionResponse as ReasoningAgentCreateCompletionResponse,
+)

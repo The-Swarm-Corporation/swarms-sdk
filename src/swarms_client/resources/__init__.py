@@ -40,6 +40,14 @@ from .swarms import (
     SwarmsResourceWithStreamingResponse,
     AsyncSwarmsResourceWithStreamingResponse,
 )
+from .reasoning_agents import (
+    ReasoningAgentsResource,
+    AsyncReasoningAgentsResource,
+    ReasoningAgentsResourceWithRawResponse,
+    AsyncReasoningAgentsResourceWithRawResponse,
+    ReasoningAgentsResourceWithStreamingResponse,
+    AsyncReasoningAgentsResourceWithStreamingResponse,
+)
 
 __all__ = [
     "HealthResource",
@@ -66,6 +74,12 @@ __all__ = [
     "AsyncSwarmsResourceWithRawResponse",
     "SwarmsResourceWithStreamingResponse",
     "AsyncSwarmsResourceWithStreamingResponse",
+    "ReasoningAgentsResource",
+    "AsyncReasoningAgentsResource",
+    "ReasoningAgentsResourceWithRawResponse",
+    "AsyncReasoningAgentsResourceWithRawResponse",
+    "ReasoningAgentsResourceWithStreamingResponse",
+    "AsyncReasoningAgentsResourceWithStreamingResponse",
     "ClientResource",
     "AsyncClientResource",
     "ClientResourceWithRawResponse",

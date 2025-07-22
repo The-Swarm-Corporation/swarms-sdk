@@ -122,28 +122,24 @@ class SwarmsResource(SyncAPIResource):
         rules: Optional[str] | NotGiven = NOT_GIVEN,
         service_tier: Optional[str] | NotGiven = NOT_GIVEN,
         stream: Optional[bool] | NotGiven = NOT_GIVEN,
-        swarm_type: (
-            Optional[
-                Literal[
-                    "AgentRearrange",
-                    "MixtureOfAgents",
-                    "SpreadSheetSwarm",
-                    "SequentialWorkflow",
-                    "ConcurrentWorkflow",
-                    "GroupChat",
-                    "MultiAgentRouter",
-                    "AutoSwarmBuilder",
-                    "HiearchicalSwarm",
-                    "auto",
-                    "MajorityVoting",
-                    "MALT",
-                    "DeepResearchSwarm",
-                    "CouncilAsAJudge",
-                    "InteractiveGroupChat",
-                ]
-            ]
-            | NotGiven
-        ) = NOT_GIVEN,
+        swarm_type: Optional[
+            Literal[
+                "AgentRearrange",
+                "MixtureOfAgents",
+                "SpreadSheetSwarm",
+                "SequentialWorkflow",
+                "ConcurrentWorkflow",
+                "GroupChat",
+                "MultiAgentRouter",
+                "AutoSwarmBuilder",
+                "HiearchicalSwarm",
+                "auto",
+                "MajorityVoting",
+                "MALT",
+                "DeepResearchSwarm",
+                "CouncilAsAJudge",
+                "InteractiveGroupChat",
+                "HeavySwarm",
         task: Optional[str] | NotGiven = NOT_GIVEN,
         tasks: Optional[List[str]] | NotGiven = NOT_GIVEN,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
@@ -320,28 +316,24 @@ class AsyncSwarmsResource(AsyncAPIResource):
         rules: Optional[str] | NotGiven = NOT_GIVEN,
         service_tier: Optional[str] | NotGiven = NOT_GIVEN,
         stream: Optional[bool] | NotGiven = NOT_GIVEN,
-        swarm_type: (
-            Optional[
-                Literal[
-                    "AgentRearrange",
-                    "MixtureOfAgents",
-                    "SpreadSheetSwarm",
-                    "SequentialWorkflow",
-                    "ConcurrentWorkflow",
-                    "GroupChat",
-                    "MultiAgentRouter",
-                    "AutoSwarmBuilder",
-                    "HiearchicalSwarm",
-                    "auto",
-                    "MajorityVoting",
-                    "MALT",
-                    "DeepResearchSwarm",
-                    "CouncilAsAJudge",
-                    "InteractiveGroupChat",
-                ]
+        swarm_type: Optional[
+            Literal[
+                "AgentRearrange",
+                "MixtureOfAgents",
+                "SpreadSheetSwarm",
+                "SequentialWorkflow",
+                "ConcurrentWorkflow",
+                "GroupChat",
+                "MultiAgentRouter",
+                "AutoSwarmBuilder",
+                "HiearchicalSwarm",
+                "auto",
+                "MajorityVoting",
+                "MALT",
+                "DeepResearchSwarm",
+                "CouncilAsAJudge",
+                "InteractiveGroupChat",
             ]
-            | NotGiven
-        ) = NOT_GIVEN,
         task: Optional[str] | NotGiven = NOT_GIVEN,
         tasks: Optional[List[str]] | NotGiven = NOT_GIVEN,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
