@@ -9,7 +9,6 @@ import pytest
 
 from tests.utils import assert_matches_type
 from swarms_client import SwarmsClient, AsyncSwarmsClient
-from swarms_client.types import HealthCheckResponse
 
 base_url = os.environ.get("TEST_API_BASE_URL", "http://127.0.0.1:4010")
 
@@ -23,7 +22,7 @@ class TestHealth:
     @parametrize
     def test_method_check(self, client: SwarmsClient) -> None:
         health = client.health.check()
-        assert_matches_type(HealthCheckResponse, health, path=["response"])
+        assert_matches_type(object, health, path=["response"])
 
     @pytest.mark.skip()
     @parametrize
@@ -33,7 +32,7 @@ class TestHealth:
         assert response.is_closed is True
         assert response.http_request.headers.get("X-Stainless-Lang") == "python"
         health = response.parse()
-        assert_matches_type(HealthCheckResponse, health, path=["response"])
+        assert_matches_type(object, health, path=["response"])
 
     @pytest.mark.skip()
     @parametrize
@@ -43,7 +42,7 @@ class TestHealth:
             assert response.http_request.headers.get("X-Stainless-Lang") == "python"
 
             health = response.parse()
-            assert_matches_type(HealthCheckResponse, health, path=["response"])
+            assert_matches_type(object, health, path=["response"])
 
         assert cast(Any, response.is_closed) is True
 
@@ -60,7 +59,7 @@ class TestAsyncHealth:
     @parametrize
     async def test_method_check(self, async_client: AsyncSwarmsClient) -> None:
         health = await async_client.health.check()
-        assert_matches_type(HealthCheckResponse, health, path=["response"])
+        assert_matches_type(object, health, path=["response"])
 
     @pytest.mark.skip()
     @parametrize
@@ -70,7 +69,7 @@ class TestAsyncHealth:
         assert response.is_closed is True
         assert response.http_request.headers.get("X-Stainless-Lang") == "python"
         health = await response.parse()
-        assert_matches_type(HealthCheckResponse, health, path=["response"])
+        assert_matches_type(object, health, path=["response"])
 
     @pytest.mark.skip()
     @parametrize
@@ -82,6 +81,6 @@ class TestAsyncHealth:
             assert response.http_request.headers.get("X-Stainless-Lang") == "python"
 
             health = await response.parse()
-            assert_matches_type(HealthCheckResponse, health, path=["response"])
+            assert_matches_type(object, health, path=["response"])
 
         assert cast(Any, response.is_closed) is True

@@ -8,7 +8,6 @@ from .swarm_run_params import SwarmRunParams as SwarmRunParams
 from .swarm_spec_param import SwarmSpecParam as SwarmSpecParam
 from .agent_run_response import AgentRunResponse as AgentRunResponse
 from .swarm_run_response import SwarmRunResponse as SwarmRunResponse
-from .health_check_response import HealthCheckResponse as HealthCheckResponse
 from .agent_completion_param import AgentCompletionParam as AgentCompletionParam
 from .swarm_get_logs_response import SwarmGetLogsResponse as SwarmGetLogsResponse
 from .model_list_available_response import (
