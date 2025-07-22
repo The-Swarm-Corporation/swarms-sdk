@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.9.0 (2025-07-22)
+
+Full Changelog: [v0.8.0...v0.9.0](https://github.com/The-Swarm-Corporation/swarms-sdk/compare/v0.8.0...v0.9.0)
+
+### Features
+
+* **api:** api update ([f0cb3f7](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/f0cb3f73525f46abdb064540b5cbb56fb5f65d57))
+
+
+### Bug Fixes
+
+* **parsing:** ignore empty metadata ([640177d](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/640177d1cde67b574dacbaeaeade9069e307a082))
+
 ## 0.8.0 (2025-07-21)
 
 Full Changelog: [v0.7.0...v0.8.0](https://github.com/The-Swarm-Corporation/swarms-sdk/compare/v0.7.0...v0.8.0)
