@@ -4,14 +4,8 @@ from typing import Optional
 
 from .._models import BaseModel
 
-__all__ = ["SwarmGetLogsResponse"]
+__all__ = ["HealthCheckResponse"]
 
 
-class SwarmGetLogsResponse(BaseModel):
-    count: Optional[int] = None
-
-    logs: Optional[object] = None
-
+class HealthCheckResponse(BaseModel):
     status: Optional[str] = None
-
-    timestamp: Optional[str] = None
