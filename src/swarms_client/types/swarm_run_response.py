@@ -8,14 +8,14 @@ __all__ = ["SwarmRunResponse"]
 
 
 class SwarmRunResponse(BaseModel):
-    id: Optional[str] = None
-    """The unique identifier for the swarm completion."""
-
     description: Optional[str] = None
     """The description of the swarm."""
 
     execution_time: Optional[float] = None
     """The execution time of the swarm."""
+
+    job_id: Optional[str] = None
+    """The unique identifier for the swarm completion."""
 
     number_of_agents: Optional[int] = None
     """The number of agents in the swarm."""
