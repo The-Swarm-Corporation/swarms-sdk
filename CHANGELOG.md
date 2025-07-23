@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.10.1 (2025-07-23)
+
+Full Changelog: [v0.10.0...v0.10.1](https://github.com/The-Swarm-Corporation/swarms-sdk/compare/v0.10.0...v0.10.1)
+
+### Bug Fixes
+
+* **parsing:** parse extra field types ([a4ef51f](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/a4ef51f53e79db858128cb83836edc60062141d1))
+
 ## 0.10.0 (2025-07-22)
 
 Full Changelog: [v0.9.0...v0.10.0](https://github.com/The-Swarm-Corporation/swarms-sdk/compare/v0.9.0...v0.10.0)
