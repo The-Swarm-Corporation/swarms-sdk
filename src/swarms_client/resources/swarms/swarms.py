@@ -89,8 +89,9 @@ class SwarmsResource(SyncAPIResource):
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
     ) -> SwarmGetLogsResponse:
         """
-        Get all API request logs for the user associated with the provided API key,
-        excluding any logs that contain a client_ip field in their data.
+        Get all API request logs for all API keys associated with the user identified by
+        the provided API key, excluding any logs that contain a client_ip field in their
+        data.
         """
         return self._get(
             "/v1/swarm/logs",
@@ -287,8 +288,9 @@ class AsyncSwarmsResource(AsyncAPIResource):
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
     ) -> SwarmGetLogsResponse:
         """
-        Get all API request logs for the user associated with the provided API key,
-        excluding any logs that contain a client_ip field in their data.
+        Get all API request logs for all API keys associated with the user identified by
+        the provided API key, excluding any logs that contain a client_ip field in their
+        data.
         """
         return await self._get(
             "/v1/swarm/logs",
