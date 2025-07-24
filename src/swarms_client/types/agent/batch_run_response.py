@@ -22,3 +22,9 @@ class BatchRunResponse(BaseModel):
 
     total_requests: Optional[int] = None
     """The total number of requests in the batch."""
+
+    cost: Optional[float] = None
+    """The total cost of the batch execution."""
+
+    most_used_model: Optional[str] = None
+    """The most frequently used model during the batch execution."""

@@ -37,3 +37,9 @@ class SwarmRunResponse(BaseModel):
 
     usage: Optional[Dict[str, object]] = None
     """The usage of the swarm."""
+
+    cost: Optional[float] = None
+    """The cost of the swarm execution."""
+
+    most_used_model: Optional[str] = None
+    """The most frequently used model during the swarm execution."""
