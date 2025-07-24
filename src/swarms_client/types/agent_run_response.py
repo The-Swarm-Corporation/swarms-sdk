@@ -31,3 +31,9 @@ class AgentRunResponse(BaseModel):
 
     usage: Optional[Dict[str, object]] = None
     """Usage statistics or metadata for the agent completion."""
+
+    cost: Optional[float] = None
+    """The cost of the agent execution."""
+
+    most_used_model: Optional[str] = None
+    """The model used for the agent execution."""

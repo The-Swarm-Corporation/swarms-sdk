@@ -15,3 +15,9 @@ class SwarmGetLogsResponse(BaseModel):
     status: Optional[str] = None
 
     timestamp: Optional[str] = None
+
+    cost: Optional[float] = None
+    """The total cost of the swarm operations in the logs."""
+
+    most_used_model: Optional[str] = None
+    """The most frequently used model across all swarm operations in the logs."""
