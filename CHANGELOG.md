@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.11.0 (2025-07-25)
+
+Full Changelog: [v0.10.1...v0.11.0](https://github.com/The-Swarm-Corporation/swarms-sdk/compare/v0.10.1...v0.11.0)
+
+### Features
+
+* **api:** api update ([e91b444](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/e91b444b1bdbab3ea9339473f81de16d7002f8aa))
+
+
+### Chores
+
+* **project:** add settings file for vscode ([d376d74](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/d376d74c4e3d8de9f2bb93093bba48ff9558d316))
+
 ## 0.10.1 (2025-07-23)
 
 Full Changelog: [v0.10.0...v0.10.1](https://github.com/The-Swarm-Corporation/swarms-sdk/compare/v0.10.0...v0.10.1)
