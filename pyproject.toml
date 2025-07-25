@@ -1,6 +1,6 @@
 [project]
 name = "swarms-client"
-version = "0.10.1"
+version = "0.11.0"
 description = "The official Python library for the swarms-client API"
 dynamic = ["readme"]
 license = "Apache-2.0"
