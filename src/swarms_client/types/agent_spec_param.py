@@ -27,6 +27,18 @@ class AgentSpecParam(TypedDict, total=False):
     tasks it is designed to perform.
     """
 
+    dynamic_temperature_enabled: Optional[bool]
+    """
+    A flag indicating whether the agent should dynamically adjust its temperature
+    based on the task.
+    """
+
+    llm_args: Optional[Dict[str, object]]
+    """
+    Additional arguments to pass to the LLM such as top_p, frequency_penalty,
+    presence_penalty, etc.
+    """
+
     max_loops: Optional[int]
     """
     The maximum number of times the agent is allowed to repeat its task, enabling

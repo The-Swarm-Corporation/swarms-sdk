@@ -114,7 +114,6 @@ class SwarmsResource(SyncAPIResource):
         messages: Union[Iterable[Dict[str, object]], Dict[str, object], None] | NotGiven = NOT_GIVEN,
         name: Optional[str] | NotGiven = NOT_GIVEN,
         rearrange_flow: Optional[str] | NotGiven = NOT_GIVEN,
-        return_history: Optional[bool] | NotGiven = NOT_GIVEN,
         rules: Optional[str] | NotGiven = NOT_GIVEN,
         service_tier: Optional[str] | NotGiven = NOT_GIVEN,
         stream: Optional[bool] | NotGiven = NOT_GIVEN,
@@ -177,9 +176,6 @@ class SwarmsResource(SyncAPIResource):
 
           rearrange_flow: Instructions on how to rearrange the flow of tasks among agents, if applicable.
 
-          return_history: A flag indicating whether the swarm should return its execution history along
-              with the final output.
-
           rules: Guidelines or constraints that govern the behavior and interactions of the
               agents within the swarm.
 
@@ -217,7 +213,6 @@ class SwarmsResource(SyncAPIResource):
                     "messages": messages,
                     "name": name,
                     "rearrange_flow": rearrange_flow,
-                    "return_history": return_history,
                     "rules": rules,
                     "service_tier": service_tier,
                     "stream": stream,
@@ -313,7 +308,6 @@ class AsyncSwarmsResource(AsyncAPIResource):
         messages: Union[Iterable[Dict[str, object]], Dict[str, object], None] | NotGiven = NOT_GIVEN,
         name: Optional[str] | NotGiven = NOT_GIVEN,
         rearrange_flow: Optional[str] | NotGiven = NOT_GIVEN,
-        return_history: Optional[bool] | NotGiven = NOT_GIVEN,
         rules: Optional[str] | NotGiven = NOT_GIVEN,
         service_tier: Optional[str] | NotGiven = NOT_GIVEN,
         stream: Optional[bool] | NotGiven = NOT_GIVEN,
@@ -376,9 +370,6 @@ class AsyncSwarmsResource(AsyncAPIResource):
 
           rearrange_flow: Instructions on how to rearrange the flow of tasks among agents, if applicable.
 
-          return_history: A flag indicating whether the swarm should return its execution history along
-              with the final output.
-
           rules: Guidelines or constraints that govern the behavior and interactions of the
               agents within the swarm.
 
@@ -416,7 +407,6 @@ class AsyncSwarmsResource(AsyncAPIResource):
                     "messages": messages,
                     "name": name,
                     "rearrange_flow": rearrange_flow,
-                    "return_history": return_history,
                     "rules": rules,
                     "service_tier": service_tier,
                     "stream": stream,
