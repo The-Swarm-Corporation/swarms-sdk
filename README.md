@@ -5,11 +5,8 @@
 
 The Swarms Client Python library provides convenient access to the Swarms Client REST API from any Python 3.8+
 application. The library includes type definitions for all request params and response fields,
-and offers both synchronous and asynchronous clients powered by [httpx](https://github.com/encode/httpx). Lern more 
-
-## Documentation
-
-The REST API documentation can be found on [docs.swarms.ai](https://docs.swarms.ai). The full API of this library can be found in [api.md](api.md).
+and offers both synchronous and asynchronous clients powered by [httpx](https://github.com/encode/httpx). The full comprehensive documentation can be found on [docs.swarms.ai](https://docs.swarms.ai) 
+and there is also simple documentation available in the [api.md](api.md) in this repository.
 
 ## Installation
 
