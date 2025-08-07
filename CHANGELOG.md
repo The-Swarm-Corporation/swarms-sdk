@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.11.1 (2025-08-07)
+
+Full Changelog: [v0.11.0...v0.11.1](https://github.com/The-Swarm-Corporation/swarms-sdk/compare/v0.11.0...v0.11.1)
+
+### Features
+
+* **api:** api update ([6734022](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/6734022c5b5a50c9cbedf98e42132764740272ad))
+
+
+### Chores
+
+* **internal:** fix ruff target version ([76dbd2c](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/76dbd2c3372d9d799323f18f32d7a29d76f8be97))
+
 ## 0.11.0 (2025-07-31)
 
 Full Changelog: [v0.10.1...v0.11.0](https://github.com/The-Swarm-Corporation/swarms-sdk/compare/v0.10.1...v0.11.0)
