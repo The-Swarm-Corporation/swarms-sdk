@@ -56,12 +56,6 @@ class SwarmRunParams(TypedDict, total=False):
     rearrange_flow: Optional[str]
     """Instructions on how to rearrange the flow of tasks among agents, if applicable."""
 
-    return_history: Optional[bool]
-    """
-    A flag indicating whether the swarm should return its execution history along
-    with the final output.
-    """
-
     rules: Optional[str]
     """
     Guidelines or constraints that govern the behavior and interactions of the
