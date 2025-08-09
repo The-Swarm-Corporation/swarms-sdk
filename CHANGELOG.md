@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.11.2 (2025-08-09)
+
+Full Changelog: [v0.11.1...v0.11.2](https://github.com/The-Swarm-Corporation/swarms-sdk/compare/v0.11.1...v0.11.2)
+
+### Chores
+
+* update @stainless-api/prism-cli to v5.15.0 ([ba4154e](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/ba4154e9af8bc19205db25fda86e57d017e9003e))
+
 ## 0.11.1 (2025-08-07)
 
 Full Changelog: [v0.11.0...v0.11.1](https://github.com/The-Swarm-Corporation/swarms-sdk/compare/v0.11.0...v0.11.1)
