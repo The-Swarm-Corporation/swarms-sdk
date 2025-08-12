@@ -17,7 +17,7 @@ base_url = os.environ.get("TEST_API_BASE_URL", "http://127.0.0.1:4010")
 class TestBatch:
     parametrize = pytest.mark.parametrize("client", [False, True], indirect=True, ids=["loose", "strict"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_method_run(self, client: SwarmsClient) -> None:
         batch = client.agent.batch.run(
@@ -25,7 +25,7 @@ class TestBatch:
         )
         assert_matches_type(BatchRunResponse, batch, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_raw_response_run(self, client: SwarmsClient) -> None:
         response = client.agent.batch.with_raw_response.run(
@@ -37,7 +37,7 @@ class TestBatch:
         batch = response.parse()
         assert_matches_type(BatchRunResponse, batch, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_streaming_response_run(self, client: SwarmsClient) -> None:
         with client.agent.batch.with_streaming_response.run(
@@ -57,7 +57,7 @@ class TestAsyncBatch:
         "async_client", [False, True, {"http_client": "aiohttp"}], indirect=True, ids=["loose", "strict", "aiohttp"]
     )
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_method_run(self, async_client: AsyncSwarmsClient) -> None:
         batch = await async_client.agent.batch.run(
@@ -65,7 +65,7 @@ class TestAsyncBatch:
         )
         assert_matches_type(BatchRunResponse, batch, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_raw_response_run(self, async_client: AsyncSwarmsClient) -> None:
         response = await async_client.agent.batch.with_raw_response.run(
@@ -77,7 +77,7 @@ class TestAsyncBatch:
         batch = await response.parse()
         assert_matches_type(BatchRunResponse, batch, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_streaming_response_run(self, async_client: AsyncSwarmsClient) -> None:
         async with async_client.agent.batch.with_streaming_response.run(

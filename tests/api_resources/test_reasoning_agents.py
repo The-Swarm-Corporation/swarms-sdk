@@ -20,13 +20,13 @@ base_url = os.environ.get("TEST_API_BASE_URL", "http://127.0.0.1:4010")
 class TestReasoningAgents:
     parametrize = pytest.mark.parametrize("client", [False, True], indirect=True, ids=["loose", "strict"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_method_create_completion(self, client: SwarmsClient) -> None:
         reasoning_agent = client.reasoning_agents.create_completion()
         assert_matches_type(ReasoningAgentCreateCompletionResponse, reasoning_agent, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_method_create_completion_with_all_params(self, client: SwarmsClient) -> None:
         reasoning_agent = client.reasoning_agents.create_completion(
@@ -44,7 +44,7 @@ class TestReasoningAgents:
         )
         assert_matches_type(ReasoningAgentCreateCompletionResponse, reasoning_agent, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_raw_response_create_completion(self, client: SwarmsClient) -> None:
         response = client.reasoning_agents.with_raw_response.create_completion()
@@ -54,7 +54,7 @@ class TestReasoningAgents:
         reasoning_agent = response.parse()
         assert_matches_type(ReasoningAgentCreateCompletionResponse, reasoning_agent, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_streaming_response_create_completion(self, client: SwarmsClient) -> None:
         with client.reasoning_agents.with_streaming_response.create_completion() as response:
@@ -66,13 +66,13 @@ class TestReasoningAgents:
 
         assert cast(Any, response.is_closed) is True
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_method_list_types(self, client: SwarmsClient) -> None:
         reasoning_agent = client.reasoning_agents.list_types()
         assert_matches_type(ReasoningAgentListTypesResponse, reasoning_agent, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_raw_response_list_types(self, client: SwarmsClient) -> None:
         response = client.reasoning_agents.with_raw_response.list_types()
@@ -82,7 +82,7 @@ class TestReasoningAgents:
         reasoning_agent = response.parse()
         assert_matches_type(ReasoningAgentListTypesResponse, reasoning_agent, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_streaming_response_list_types(self, client: SwarmsClient) -> None:
         with client.reasoning_agents.with_streaming_response.list_types() as response:
@@ -100,13 +100,13 @@ class TestAsyncReasoningAgents:
         "async_client", [False, True, {"http_client": "aiohttp"}], indirect=True, ids=["loose", "strict", "aiohttp"]
     )
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_method_create_completion(self, async_client: AsyncSwarmsClient) -> None:
         reasoning_agent = await async_client.reasoning_agents.create_completion()
         assert_matches_type(ReasoningAgentCreateCompletionResponse, reasoning_agent, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_method_create_completion_with_all_params(self, async_client: AsyncSwarmsClient) -> None:
         reasoning_agent = await async_client.reasoning_agents.create_completion(
@@ -124,7 +124,7 @@ class TestAsyncReasoningAgents:
         )
         assert_matches_type(ReasoningAgentCreateCompletionResponse, reasoning_agent, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_raw_response_create_completion(self, async_client: AsyncSwarmsClient) -> None:
         response = await async_client.reasoning_agents.with_raw_response.create_completion()
@@ -134,7 +134,7 @@ class TestAsyncReasoningAgents:
         reasoning_agent = await response.parse()
         assert_matches_type(ReasoningAgentCreateCompletionResponse, reasoning_agent, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_streaming_response_create_completion(self, async_client: AsyncSwarmsClient) -> None:
         async with async_client.reasoning_agents.with_streaming_response.create_completion() as response:
@@ -146,13 +146,13 @@ class TestAsyncReasoningAgents:
 
         assert cast(Any, response.is_closed) is True
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_method_list_types(self, async_client: AsyncSwarmsClient) -> None:
         reasoning_agent = await async_client.reasoning_agents.list_types()
         assert_matches_type(ReasoningAgentListTypesResponse, reasoning_agent, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_raw_response_list_types(self, async_client: AsyncSwarmsClient) -> None:
         response = await async_client.reasoning_agents.with_raw_response.list_types()
@@ -162,7 +162,7 @@ class TestAsyncReasoningAgents:
         reasoning_agent = await response.parse()
         assert_matches_type(ReasoningAgentListTypesResponse, reasoning_agent, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_streaming_response_list_types(self, async_client: AsyncSwarmsClient) -> None:
         async with async_client.reasoning_agents.with_streaming_response.list_types() as response:

@@ -17,13 +17,13 @@ base_url = os.environ.get("TEST_API_BASE_URL", "http://127.0.0.1:4010")
 class TestSwarms:
     parametrize = pytest.mark.parametrize("client", [False, True], indirect=True, ids=["loose", "strict"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_method_check_available(self, client: SwarmsClient) -> None:
         swarm = client.swarms.check_available()
         assert_matches_type(SwarmCheckAvailableResponse, swarm, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_raw_response_check_available(self, client: SwarmsClient) -> None:
         response = client.swarms.with_raw_response.check_available()
@@ -33,7 +33,7 @@ class TestSwarms:
         swarm = response.parse()
         assert_matches_type(SwarmCheckAvailableResponse, swarm, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_streaming_response_check_available(self, client: SwarmsClient) -> None:
         with client.swarms.with_streaming_response.check_available() as response:
@@ -45,13 +45,13 @@ class TestSwarms:
 
         assert cast(Any, response.is_closed) is True
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_method_get_logs(self, client: SwarmsClient) -> None:
         swarm = client.swarms.get_logs()
         assert_matches_type(SwarmGetLogsResponse, swarm, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_raw_response_get_logs(self, client: SwarmsClient) -> None:
         response = client.swarms.with_raw_response.get_logs()
@@ -61,7 +61,7 @@ class TestSwarms:
         swarm = response.parse()
         assert_matches_type(SwarmGetLogsResponse, swarm, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_streaming_response_get_logs(self, client: SwarmsClient) -> None:
         with client.swarms.with_streaming_response.get_logs() as response:
@@ -73,13 +73,13 @@ class TestSwarms:
 
         assert cast(Any, response.is_closed) is True
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_method_run(self, client: SwarmsClient) -> None:
         swarm = client.swarms.run()
         assert_matches_type(SwarmRunResponse, swarm, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_method_run_with_all_params(self, client: SwarmsClient) -> None:
         swarm = client.swarms.run(
@@ -119,7 +119,7 @@ class TestSwarms:
         )
         assert_matches_type(SwarmRunResponse, swarm, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_raw_response_run(self, client: SwarmsClient) -> None:
         response = client.swarms.with_raw_response.run()
@@ -129,7 +129,7 @@ class TestSwarms:
         swarm = response.parse()
         assert_matches_type(SwarmRunResponse, swarm, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_streaming_response_run(self, client: SwarmsClient) -> None:
         with client.swarms.with_streaming_response.run() as response:
@@ -147,13 +147,13 @@ class TestAsyncSwarms:
         "async_client", [False, True, {"http_client": "aiohttp"}], indirect=True, ids=["loose", "strict", "aiohttp"]
     )
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_method_check_available(self, async_client: AsyncSwarmsClient) -> None:
         swarm = await async_client.swarms.check_available()
         assert_matches_type(SwarmCheckAvailableResponse, swarm, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_raw_response_check_available(self, async_client: AsyncSwarmsClient) -> None:
         response = await async_client.swarms.with_raw_response.check_available()
@@ -163,7 +163,7 @@ class TestAsyncSwarms:
         swarm = await response.parse()
         assert_matches_type(SwarmCheckAvailableResponse, swarm, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_streaming_response_check_available(self, async_client: AsyncSwarmsClient) -> None:
         async with async_client.swarms.with_streaming_response.check_available() as response:
@@ -175,13 +175,13 @@ class TestAsyncSwarms:
 
         assert cast(Any, response.is_closed) is True
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_method_get_logs(self, async_client: AsyncSwarmsClient) -> None:
         swarm = await async_client.swarms.get_logs()
         assert_matches_type(SwarmGetLogsResponse, swarm, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_raw_response_get_logs(self, async_client: AsyncSwarmsClient) -> None:
         response = await async_client.swarms.with_raw_response.get_logs()
@@ -191,7 +191,7 @@ class TestAsyncSwarms:
         swarm = await response.parse()
         assert_matches_type(SwarmGetLogsResponse, swarm, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_streaming_response_get_logs(self, async_client: AsyncSwarmsClient) -> None:
         async with async_client.swarms.with_streaming_response.get_logs() as response:
@@ -203,13 +203,13 @@ class TestAsyncSwarms:
 
         assert cast(Any, response.is_closed) is True
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_method_run(self, async_client: AsyncSwarmsClient) -> None:
         swarm = await async_client.swarms.run()
         assert_matches_type(SwarmRunResponse, swarm, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_method_run_with_all_params(self, async_client: AsyncSwarmsClient) -> None:
         swarm = await async_client.swarms.run(
@@ -249,7 +249,7 @@ class TestAsyncSwarms:
         )
         assert_matches_type(SwarmRunResponse, swarm, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_raw_response_run(self, async_client: AsyncSwarmsClient) -> None:
         response = await async_client.swarms.with_raw_response.run()
@@ -259,7 +259,7 @@ class TestAsyncSwarms:
         swarm = await response.parse()
         assert_matches_type(SwarmRunResponse, swarm, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_streaming_response_run(self, async_client: AsyncSwarmsClient) -> None:
         async with async_client.swarms.with_streaming_response.run() as response:
