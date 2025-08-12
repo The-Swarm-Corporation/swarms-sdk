@@ -18,13 +18,13 @@ class TestClient:
         "client", [False, True], indirect=True, ids=["loose", "strict"]
     )
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_method_get_root(self, client: SwarmsClient) -> None:
         client_ = client.get_root()
         assert_matches_type(object, client_, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_raw_response_get_root(self, client: SwarmsClient) -> None:
         response = client.with_raw_response.get_root()
@@ -34,7 +34,7 @@ class TestClient:
         client_ = response.parse()
         assert_matches_type(object, client_, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_streaming_response_get_root(self, client: SwarmsClient) -> None:
         with client.with_streaming_response.get_root() as response:
@@ -55,13 +55,13 @@ class TestAsyncClient:
         ids=["loose", "strict", "aiohttp"],
     )
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_method_get_root(self, async_client: AsyncSwarmsClient) -> None:
         client = await async_client.get_root()
         assert_matches_type(object, client, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_raw_response_get_root(self, async_client: AsyncSwarmsClient) -> None:
         response = await async_client.with_raw_response.get_root()
@@ -71,7 +71,7 @@ class TestAsyncClient:
         client = await response.parse()
         assert_matches_type(object, client, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_streaming_response_get_root(
         self, async_client: AsyncSwarmsClient

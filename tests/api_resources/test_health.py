@@ -19,13 +19,13 @@ class TestHealth:
         "client", [False, True], indirect=True, ids=["loose", "strict"]
     )
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_method_check(self, client: SwarmsClient) -> None:
         health = client.health.check()
         assert_matches_type(HealthCheckResponse, health, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_raw_response_check(self, client: SwarmsClient) -> None:
         response = client.health.with_raw_response.check()
@@ -35,7 +35,7 @@ class TestHealth:
         health = response.parse()
         assert_matches_type(HealthCheckResponse, health, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_streaming_response_check(self, client: SwarmsClient) -> None:
         with client.health.with_streaming_response.check() as response:
@@ -56,13 +56,13 @@ class TestAsyncHealth:
         ids=["loose", "strict", "aiohttp"],
     )
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_method_check(self, async_client: AsyncSwarmsClient) -> None:
         health = await async_client.health.check()
         assert_matches_type(HealthCheckResponse, health, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_raw_response_check(self, async_client: AsyncSwarmsClient) -> None:
         response = await async_client.health.with_raw_response.check()
@@ -72,7 +72,7 @@ class TestAsyncHealth:
         health = await response.parse()
         assert_matches_type(HealthCheckResponse, health, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_streaming_response_check(
         self, async_client: AsyncSwarmsClient
