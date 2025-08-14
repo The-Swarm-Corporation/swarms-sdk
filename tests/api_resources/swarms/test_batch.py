@@ -19,7 +19,7 @@ class TestBatch:
         "client", [False, True], indirect=True, ids=["loose", "strict"]
     )
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_method_run(self, client: SwarmsClient) -> None:
         batch = client.swarms.batch.run(
@@ -27,7 +27,7 @@ class TestBatch:
         )
         assert_matches_type(BatchRunResponse, batch, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_raw_response_run(self, client: SwarmsClient) -> None:
         response = client.swarms.batch.with_raw_response.run(
@@ -39,7 +39,7 @@ class TestBatch:
         batch = response.parse()
         assert_matches_type(BatchRunResponse, batch, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_streaming_response_run(self, client: SwarmsClient) -> None:
         with client.swarms.batch.with_streaming_response.run(
@@ -62,7 +62,7 @@ class TestAsyncBatch:
         ids=["loose", "strict", "aiohttp"],
     )
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_method_run(self, async_client: AsyncSwarmsClient) -> None:
         batch = await async_client.swarms.batch.run(
@@ -70,7 +70,7 @@ class TestAsyncBatch:
         )
         assert_matches_type(BatchRunResponse, batch, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_raw_response_run(self, async_client: AsyncSwarmsClient) -> None:
         response = await async_client.swarms.batch.with_raw_response.run(
@@ -82,7 +82,7 @@ class TestAsyncBatch:
         batch = await response.parse()
         assert_matches_type(BatchRunResponse, batch, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_streaming_response_run(
         self, async_client: AsyncSwarmsClient

@@ -19,13 +19,13 @@ class TestRate:
         "client", [False, True], indirect=True, ids=["loose", "strict"]
     )
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_method_get_limits(self, client: SwarmsClient) -> None:
         rate = client.client.rate.get_limits()
         assert_matches_type(RateGetLimitsResponse, rate, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_raw_response_get_limits(self, client: SwarmsClient) -> None:
         response = client.client.rate.with_raw_response.get_limits()
@@ -35,7 +35,7 @@ class TestRate:
         rate = response.parse()
         assert_matches_type(RateGetLimitsResponse, rate, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     def test_streaming_response_get_limits(self, client: SwarmsClient) -> None:
         with client.client.rate.with_streaming_response.get_limits() as response:
@@ -56,13 +56,13 @@ class TestAsyncRate:
         ids=["loose", "strict", "aiohttp"],
     )
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_method_get_limits(self, async_client: AsyncSwarmsClient) -> None:
         rate = await async_client.client.rate.get_limits()
         assert_matches_type(RateGetLimitsResponse, rate, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_raw_response_get_limits(
         self, async_client: AsyncSwarmsClient
@@ -74,7 +74,7 @@ class TestAsyncRate:
         rate = await response.parse()
         assert_matches_type(RateGetLimitsResponse, rate, path=["response"])
 
-    @pytest.mark.skip()
+    @pytest.mark.skip(reason="Prism tests are disabled")
     @parametrize
     async def test_streaming_response_get_limits(
         self, async_client: AsyncSwarmsClient
