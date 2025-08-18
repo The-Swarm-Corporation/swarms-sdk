@@ -8,11 +8,11 @@ __all__ = ["AgentRunResponse"]
 
 
 class AgentRunResponse(BaseModel):
-    id: Optional[str] = None
-    """The unique identifier for the agent completion."""
-
     description: Optional[str] = None
     """A description of the agent or completion."""
+
+    job_id: Optional[str] = None
+    """The unique identifier for the agent completion."""
 
     name: Optional[str] = None
     """The name of the agent."""

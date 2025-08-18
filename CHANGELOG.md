@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.12.0 (2025-08-18)
+
+Full Changelog: [v0.11.2...v0.12.0](https://github.com/The-Swarm-Corporation/swarms-sdk/compare/v0.11.2...v0.12.0)
+
+### Features
+
+* **api:** api update ([e4b9255](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/e4b9255402f9e999f4be522c29593f6fc449a979))
+
 ## 0.11.2 (2025-08-12)
 
 Full Changelog: [v0.11.1...v0.11.2](https://github.com/The-Swarm-Corporation/swarms-sdk/compare/v0.11.1...v0.11.2)
