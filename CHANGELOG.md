@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.12.1 (2025-08-22)
+
+Full Changelog: [v0.12.0...v0.12.1](https://github.com/The-Swarm-Corporation/swarms-sdk/compare/v0.12.0...v0.12.1)
+
+### Chores
+
+* update github action ([6b52458](https://github.com/The-Swarm-Corporation/swarms-sdk/commit/6b524584d1fdb1c3b10f827fd362b71aea4c8561))
+
 ## 0.12.0 (2025-08-18)
 
 Full Changelog: [v0.11.2...v0.12.0](https://github.com/The-Swarm-Corporation/swarms-sdk/compare/v0.11.2...v0.12.0)
